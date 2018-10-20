@@ -1,0 +1,11 @@
+# build output
+vendor
+out
+
+# Eclipse config
+.project
+
+# Go coverage reports
+cover*.out
+cover*.html
+cover*.tmp
