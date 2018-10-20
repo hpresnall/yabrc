@@ -2,10 +2,9 @@
 set -e
 
 NAME=yabrc
-#COMMIT_HASH=$(git rev-parse HEAD)
-#COMMIT_HASH=${COMMIT_HASH:0:8}
-COMMIT_HASH=dev
-VERSION=`date -u +%Y-%m-%d`_${COMMIT_HASH}
+COMMIT_HASH=$(git rev-parse HEAD)
+COMMIT_HASH=${COMMIT_HASH:0:8}
+VERSION=`date -u +%Y%m%d`_${COMMIT_HASH}
 
 ROOT_DIR=$(cd $(dirname $(dirname $0)) && pwd)
 # echo "ROOT_DIR=$ROOT_DIR"
