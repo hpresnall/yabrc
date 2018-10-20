@@ -13,6 +13,8 @@ yabrc uses `make` to configure and build. Go version 1.8 or higher is needed alo
 3. Copy the executable for your architecture to somewhere in your path (e.g. `cp out/out/yabrc-linux-amd64 $GOPATH/bin/yabrc`)
 
 ## Running yabrc
+See the [command reference](COMMANDS.md) for more information.
+
 ### Initial Configuration
 yabrc configuration is stored in properties files. You will need to create one for each file system or set of directories that you want to track. There are 4 properties, 2 of which are required:
 * `root`: (_required_): the root file system or directory of this index.
