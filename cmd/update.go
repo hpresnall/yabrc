@@ -26,7 +26,7 @@ func init() {
 var updateCmd = &cobra.Command{
 	Use:   "update <config_file>",
 	Short: "Rescan the filesystem and update the index",
-	Args:  cobra.RangeArgs(1, 2), // config_file & --old_ext
+	Args:  cobra.ExactArgs(1), // config file
 	RunE:  runUpdate,
 }
 
@@ -153,6 +153,5 @@ func confirm(prompt string) bool {
 		if strings.HasPrefix(input, "n") {
 			return false
 		}
-
 	}
 }

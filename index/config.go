@@ -26,9 +26,8 @@ func NewConfig(configFile string) (Config, error) {
 	v := viper.New()
 	v.SetConfigFile(configFile)
 	ConfigViperHook(v)
-	err := v.ReadInConfig()
 
-	if err != nil {
+	if err := v.ReadInConfig(); err != nil {
 		return config, err
 	}
 
@@ -55,7 +54,7 @@ func NewConfig(configFile string) (Config, error) {
 	if savePath == "" {
 		// path.Dir assumes / for separator; Replace() first to ensure it works
 		savePath = path.Dir(strings.Replace(configFile, "\\", "/", -1))
-		log.DEBUG.Println("set empty 'savePath' to '", savePath, ",")
+		log.DEBUG.Printf("set empty 'savePath' to '%s'", savePath)
 	} else {
 		strings.Replace(savePath, "\\", "/", -1)
 	}

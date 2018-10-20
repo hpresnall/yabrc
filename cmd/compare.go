@@ -18,7 +18,7 @@ func init() {
 var compareCmd = &cobra.Command{
 	Use:   "compare <config_file_1> [config_file_2]",
 	Short: "Compare an existing index to another / updated index",
-	Args:  cobra.RangeArgs(1, 4), // 1 to 2 configs + optional exts (i.e. use default)
+	Args:  cobra.RangeArgs(1, 2), // 1 or 2 config files
 	RunE:  runCompare,
 }
 

@@ -20,7 +20,7 @@ func init() {
 var printCmd = &cobra.Command{
 	Use:   "print <config_file>",
 	Short: "Print index data",
-	Args:  cobra.RangeArgs(1, 2),
+	Args:  cobra.ExactArgs(1), // config file
 	RunE:  runPrint,
 }
 

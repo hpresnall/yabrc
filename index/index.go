@@ -212,15 +212,11 @@ func (idx *Index) Store(path string) error {
 		gz.Write([]byte("\n"))
 	}
 
-	err = gz.Flush()
-
-	if err != nil {
+	if err = gz.Flush(); err != nil {
 		return err
 	}
 
-	err = gz.Close()
-
-	if err != nil {
+	if err = gz.Close(); err != nil {
 		return err
 	}
 

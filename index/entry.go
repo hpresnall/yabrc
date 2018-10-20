@@ -47,9 +47,8 @@ func buildEntry(path string, info os.FileInfo) (Entry, error) {
 	defer file.Close()
 
 	sha256er := sha256.New()
-	_, err = io.Copy(sha256er, file)
 
-	if err != nil {
+	if _, err = io.Copy(sha256er, file); err != nil {
 		return e, err
 	}
 
