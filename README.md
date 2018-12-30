@@ -10,7 +10,7 @@ yabrc uses `make` to configure and build. Go version 1.8 or higher is needed alo
 
 1. Run `make setup` to install dep and gometalinter and download dependencies.
 2. Run `make` to lint, vet, test and build executables for Linux, MacOS and Windows.
-3. Copy the executable for your architecture to somewhere in your path (e.g. `cp out/out/yabrc-linux-amd64 $GOPATH/bin/yabrc`)
+3. Copy the executable for your architecture to somewhere in your path (e.g. `cp out/yabrc-linux-amd64 $GOPATH/bin/yabrc`)
 
 ## Running yabrc
 See the [command reference](COMMANDS.md) for more information.
