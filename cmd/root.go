@@ -31,8 +31,10 @@ func init() {
 }
 
 var rootCmd = &cobra.Command{
-	Long: "yabrc - yet another bit rot checker",
-	Use:  "yabrc",
+	Long:          "yabrc - yet another bit rot checker",
+	Use:           "yabrc",
+	SilenceUsage:  true, // do not print usage on errors
+	SilenceErrors: true, // main will log the error via log.ERROR instead of Cobra
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if debug {
 			// DEBUG logging, microsecond timestamps and line numbers
