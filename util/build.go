@@ -1,6 +1,7 @@
 package util
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -38,7 +39,9 @@ func BuildIndex(config index.Config, existingIdx *index.Index) (*index.Index, er
 
 	err = afero.Walk(index.GetIndexFs(), idx.Root(), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return err
+			errCount++
+			log.WARN.Println("error reading file:", err.Error())
+			return nil
 		}
 
 		if info.IsDir() {
@@ -95,6 +98,11 @@ func BuildIndex(config index.Config, existingIdx *index.Index) (*index.Index, er
 
 		return nil
 	})
+
+	// index is truly empty, not just empty because all the files could not be read
+	if (idx.Size() == 0) && errCount > 0 {
+		err = errors.New("no files successfully read from '" + idx.Root() + "'")
+	}
 
 	d := time.Since(start)
 	skippedCount := zeroCount + nonCount + existingCount
