@@ -175,7 +175,7 @@ func Load(path string) (*Index, error) {
 }
 
 // Store writes the index to the file system at the given path.
-// This path should be a file  callers are responsible for naming the file.
+// This path should be a file. Callers are responsible for naming the file.
 func (idx *Index) Store(path string) error {
 	if idx.root == "" {
 		return errors.New("cannot store Index with empty root")
@@ -249,7 +249,7 @@ func (idx *Index) Add(path string, info os.FileInfo) error {
 		return nil
 	}
 
-	// ensure Windows / are changed to \
+	// ensure Windows \ are changed to /
 	path = strings.Replace(path, "\\", "/", -1)
 
 	if !strings.HasPrefix(path, idx.Root()) {

@@ -128,7 +128,7 @@ baseName=testBaseName
 	}
 
 	if len(c.ignoredDirs) != 0 {
-		t.Fatal("ignoredDirs shoiuld be empty")
+		t.Fatal("ignoredDirs should be empty")
 	}
 }
 
@@ -145,7 +145,7 @@ ignoredDirs=[
 	}
 }
 
-// calls setupFs()
+// calls setupTestFs()
 // links the index file system into Viper
 // creates 'config.properties' from the given string and loads it
 func newConfigFromString(t *testing.T, configString string) (Config, func(), error) {
