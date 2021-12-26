@@ -56,7 +56,7 @@ func NewConfig(configFile string) (Config, error) {
 		savePath = path.Dir(strings.Replace(configFile, "\\", "/", -1))
 		log.DEBUG.Printf("set empty 'savePath' to '%s'", savePath)
 	} else {
-		strings.Replace(savePath, "\\", "/", -1)
+		savePath = strings.Replace(savePath, "\\", "/", -1)
 	}
 
 	config.savePath = savePath

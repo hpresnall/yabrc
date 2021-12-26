@@ -1,14 +1,14 @@
 # yabrc - yet another bit rot checker
 yabrc is a file integrity checker designed to protect personal file backups from bit rot. It is similar to programs like [integrit](https://github.com/integrit/integrit) but is written in Go and should be easier to run on Windows.
 
-yabrc is designed to be used for checking file integrity before and after backups of nearly complete file systems or large directory trees. It can easily be used to track changes of a single file system over time or the differences between two file systems. It also assumes that the file system structure is mostly the same across backup storage systems and backups are mostly simple bulk copies. So, yabrc does not support a sophisticated set of file matching rules.
+yabrc is designed to be used for checking file integrity before and after backups of complete file systems or large directory trees. It can easily be used to track changes to a single file system over time or the differences between two file systems. For backups, yabrc assumes that the file system structure is the same across backup storage systems and backups are mostly simple bulk copies. So, yabrc does not support a sophisticated set of file matching rules to compare different file systems.
 
-The yabrc program compiles to a single executable with no dependencies so it is portable and easy to deploy. Configuration is done via a single properties file for each backup and scan results are stored in a single index file. Indexes are created by scanning the file system and hashing each file. Once created, the index can be compared to other indexes using the same executable.
+The yabrc program compiles to a single executable with no dependencies so it is portable and easy to deploy. Configuration is done via a single properties file for each file system and scan results are stored in a single index file. Indexes are created by scanning the file system and hashing each file. Once created, the index can be compared to other indexes using the same executable.
 
 ## Build & Install
-yabrc uses `make` to configure and build. Go version 1.8 or higher is needed along with standard Unix tools like awk, bash and grep. [Go dep](https://golang.github.io/dep/) is used for managing dependencies.
+yabrc uses `make` to configure and build. Go version 1.15 or higher is needed along with standard Unix tools like awk, bash and grep. Go modules are used for managing dependencies.
 
-1. Run `make setup` to install dep and gometalinter and download dependencies.
+1. Run `make setup` to install [golangci-lint](https://golangci-lint.run/) and download dependencies.
 2. Run `make` to lint, vet, test and build executables for Linux, MacOS and Windows.
 3. Copy the executable for your architecture to somewhere in your path (e.g. `cp out/yabrc-linux-amd64 $GOPATH/bin/yabrc`)
 
@@ -59,7 +59,6 @@ yabrc uses Go's implementation of [SHA256](https://golang.org/pkg/crypto/sha256/
 
 yabrc relies on SHA256 being able to produce different hashes for 1 bit changes in a file, which is a safe assumption of the algorithm. Hash differences will indicate changes to a file insofar as Go's implementation is correct.
 
-Corruption or tampering of the Go compiler or of yabrc could potentially allow the same hash for different file content. No attempts are made to ensure the integrity of Go's implementation at build time or yabrc's executable at run time. OS level security of the system used to build yabrc as well as all systems storing and running yabrc is critical. Note that it _is_ possible to run yabrc from a directory that itself is indexed but that [may not be enough](http://wiki.c2.com/?TheKenThompsonHack) prevent malicious tampering.
+Corruption or tampering of the Go compiler or of the yabrc executable could potentially allow the same hash for different file content. No attempts are made to ensure the integrity of Go's implementation at build time or yabrc's executable at run time. OS level security of the system used to build yabrc as well as all systems storing and running yabrc is critical. Note that it _is_ possible to run yabrc from a directory that itself is indexed but that [may not be enough](http://wiki.c2.com/?TheKenThompsonHack) to prevent malicious tampering.
 
-Further, index files  are not protected from tampering. yabrc does not verify index files other than what is required for valid parsing. It is recommended that the yabrc configuration files and indexes are stored in file system that is indexed. If additional protection is needed it is certainly possible to encrypt or sign the indexes, but that is out of scope for yabrc.
-
+Further, index files are not protected from tampering. yabrc does not verify index files other than what is required for valid parsing. It is recommended that the yabrc configuration files and indexes are stored in file system that is indexed. If additional protection is needed it is certainly possible to encrypt or sign the indexes, but that is out of scope for yabrc.

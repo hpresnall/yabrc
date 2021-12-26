@@ -431,13 +431,12 @@ func TestStoreZeroVal(t *testing.T) {
 
 func TestSetIndexFs(t *testing.T) {
 	defer func() {
-		if r := recover(); r != nil {
-			// expected; ignore
+		if r := recover(); r == nil {
+			t.Error("should not be able to set the index fs to nil")
 		}
 	}()
 
 	SetIndexFs(nil)
-	t.Error("should not be able to set the index fs to nil")
 }
 
 func newIndexFromString(indexString string, t *testing.T) (*Index, error) {

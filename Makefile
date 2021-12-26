@@ -1,9 +1,8 @@
-GOPACKAGES=$(shell go list ./... | grep -v /vendor)
+GOPACKAGES=$(shell go list ./...)
 GOFILES=$(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
 BUILD_DATE="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-# must run 'make deps' at least once before the default will succeed!`
 default: testandbuild
 
 .PHONY: testandbuild
@@ -18,15 +17,12 @@ lintall: fmt vet lint
 build:
 	@./scripts/build-all.sh
 
-setup:
-	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-	dep ensure
-	go get -u github.com/alecthomas/gometalinter
-	@gometalinter --install > /dev/null 2>&1
+setup: modules
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 # update dependant packages as needed
-deps:
-	dep ensure 
+modules:
+	go mod tidy
 
 test:
 	@echo 'mode: atomic' > coverage.out
@@ -44,14 +40,13 @@ dofmt:
 	gofmt -w -l ${GOFILES}
 
 fmt:
-	@if [ -n "$$(gofmt -l ${GOFILES})" ]; then echo 'Please run gofmt -lw on your code.' && exit 1; fi
+	@if [ -n "$$(gofmt -l ${GOFILES})" ]; then echo 'Please run make dofmt.' && exit 1; fi
 
 vet:
-	@$(GOPATH)/bin/gometalinter --disable-all --enable=vet --enable=vetshadow --enable=ineffassign --enable=goconst --tests --vendor -e docs.go ./...
+	@$(GOPATH)/bin/golangci-lint -Derrcheck -Dstaticcheck run ./...
 
 lint:
 	@$(GOPATH)/bin/golint -set_exit_status=true $(GOPACKAGES)
 
 clean:
-	rm -f coverage.out coverage_percent.out coverage.html
-	rm -rf out vendor
+	rm -f coverage.out coverage.html

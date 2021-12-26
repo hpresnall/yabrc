@@ -57,7 +57,7 @@ func New(root string) (*Index, error) {
 // Bad data in the Index will be logged but processing will continue to the end of the file.
 func Load(path string) (*Index, error) {
 	// fix \ to /
-	strings.Replace(path, "\\", "/", -1)
+	path = strings.Replace(path, "\\", "/", -1)
 
 	log.DEBUG.Printf("loading Index from '%s'", path)
 
@@ -208,8 +208,17 @@ func (idx *Index) Store(path string) error {
 
 		log.TRACE.Println("writing", csv)
 
-		gz.Write([]byte(csv))
-		gz.Write([]byte("\n"))
+		_, err = gz.Write([]byte(csv))
+
+		if err != nil {
+			return err
+		}
+
+		_, err = gz.Write([]byte("\n"))
+
+		if err != nil {
+			return err
+		}
 	}
 
 	if err = gz.Flush(); err != nil {

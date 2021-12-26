@@ -54,14 +54,15 @@ func TestEmptyCmd(t *testing.T) {
 func TestPrint(t *testing.T) {
 	defer setup(t)()
 
+	counter := &log.Counter{}
+	log.SetLogListeners(log.LogCounter(counter, log.LevelDebug))
+
 	rootCmd.SetArgs([]string{"print", "config.properties"})
 	err := rootCmd.Execute()
 
 	if err != nil {
 		t.Error("should not error on print", err)
 	}
-
-	log.ResetLogCounters()
 
 	// call with debug for coverage
 	rootCmd.SetArgs([]string{"print", "--debug", "config.properties"})
@@ -71,9 +72,7 @@ func TestPrint(t *testing.T) {
 		t.Error("should not error on print", err)
 	}
 
-	n := log.LogCountForLevel(log.LevelDebug)
-
-	if n == 0 {
+	if counter.Count() == 0 {
 		t.Error("should output DEBUG for --debug")
 	}
 }
