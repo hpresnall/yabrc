@@ -12,13 +12,13 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	idx, err := New("")
+	_, err := New("")
 
 	if err == nil {
 		t.Fatal("should not be able to create Index with empty root")
 	}
 
-	idx, err = New("test")
+	idx, err := New("test")
 
 	if err != nil {
 		t.Fatal("New failed", err)

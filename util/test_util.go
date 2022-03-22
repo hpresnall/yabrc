@@ -1,4 +1,5 @@
-//+build !release
+//go:build !release
+// +build !release
 
 package util
 

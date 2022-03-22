@@ -25,8 +25,6 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "DEBUG level logging")
 	rootCmd.PersistentFlags().StringVarP(&ext, "ext", "e", "_current", "index file extension")
 
-	rootCmd.MarkFlagRequired("ext")
-
 	rootCmd.AddCommand(versionCmd, printCmd, updateCmd, compareCmd)
 }
 

@@ -6,13 +6,10 @@ BUILD_DATE="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")"
 default: testandbuild
 
 .PHONY: testandbuild
-testandbuild: lintall testcoverage build
+testandbuild: lint testcoverage build
 
 .PHONY: testcoverage
 testcoverage: test coverage
-
-.PHONY: lintall
-lintall: fmt vet lint
 
 build:
 	@./scripts/build-all.sh
@@ -20,7 +17,7 @@ build:
 setup: modules
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
-# update dependant packages as needed
+# update dependent packages as needed
 modules:
 	go mod tidy
 
@@ -39,14 +36,9 @@ coverage:
 dofmt:
 	gofmt -w -l ${GOFILES}
 
-fmt:
-	@if [ -n "$$(gofmt -l ${GOFILES})" ]; then echo 'Please run make dofmt.' && exit 1; fi
-
-vet:
-	@$(GOPATH)/bin/golangci-lint -Derrcheck -Dstaticcheck run ./...
-
 lint:
-	@$(GOPATH)/bin/golint -set_exit_status=true $(GOPACKAGES)
+	@if [ -n "$$(gofmt -l ${GOFILES})" ]; then echo 'Please run make dofmt.' && exit 1; fi
+	@$(GOPATH)/bin/golangci-lint run
 
 clean:
 	rm -f coverage.out coverage.html
