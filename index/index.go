@@ -16,6 +16,7 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/afero"
 	log "github.com/spf13/jwalterweatherman"
+	"golang.org/x/text/unicode/norm"
 )
 
 // use a file system wrapper to allow for testing
@@ -139,6 +140,7 @@ func Load(path string) (*Index, error) {
 		for ; i < (len(fields) - 3); i++ {
 			entryPath = entryPath + "," + originalFields[i]
 		}
+		entryPath = norm.NFC.String(entryPath) // normalize paths that contain Unicode combining characters to a single character
 
 		rawTime, err := strconv.ParseInt(fields[i], 10, 64)
 
