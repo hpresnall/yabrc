@@ -20,7 +20,7 @@ func init() {
 var printCmd = &cobra.Command{
 	Use:   "print <config_file>",
 	Short: "Print index data",
-	Args:  cobra.ExactArgs(1), // config file
+	Args:  cobra.MinimumNArgs(1), // at least one config file
 	RunE:  runPrint,
 }
 
@@ -35,20 +35,38 @@ func runPrint(_ *cobra.Command, args []string) error {
 		log.SetStdoutThreshold(log.LevelError)
 	}
 
-	idx, err := loadIndex(args[0], ext)
-
-	if err != nil {
-		return err
+	if json {
+		fmt.Println("[")
 	}
 
-	if entries {
-		idx.ForEach(func(e index.Entry) {
-			log.INFO.Println(e)
-		})
+	for n, index_name := range args {
+		idx, err := loadIndex(index_name, ext)
+
+		if err != nil {
+			return err
+		}
+
+		if entries {
+			idx.ForEach(func(e index.Entry) {
+				log.INFO.Println(e)
+			})
+		}
+
+		if json {
+			fmt.Fprintln(writer, idx.StringWithEntries())
+		}
+
+		if n < len(args)-1 {
+			if json {
+				fmt.Println(",")
+			} else {
+				fmt.Println()
+			}
+		}
 	}
 
 	if json {
-		fmt.Fprintln(writer, idx.StringWithEntries())
+		fmt.Println("]")
 	}
 
 	return nil

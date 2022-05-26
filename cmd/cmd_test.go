@@ -9,7 +9,7 @@ import (
 	log "github.com/spf13/jwalterweatherman"
 )
 
-var args = []string{util.ConfigFile}
+var args []string
 
 var config index.Config
 var idx *index.Index
@@ -27,11 +27,14 @@ func setup(t *testing.T) func() {
 	idx = util.BuildTestIndex(t, config)
 	util.StoreIndex(idx, config, "_current")
 
+	args = []string{util.ConfigFile}
+
 	return func() {
 		teardown()
 
 		reader = originalReader
 
+		args = nil
 		entries = false
 		json = false
 
@@ -57,7 +60,8 @@ func TestPrint(t *testing.T) {
 	counter := &log.Counter{}
 	log.SetLogListeners(log.LogCounter(counter, log.LevelDebug))
 
-	rootCmd.SetArgs([]string{"print", "config.properties"})
+	// pass config twice to cover printing more than one index
+	rootCmd.SetArgs([]string{"print", util.ConfigFile, util.ConfigFile})
 	err := rootCmd.Execute()
 
 	if err != nil {
@@ -80,6 +84,8 @@ func TestPrint(t *testing.T) {
 func TestPrintJson(t *testing.T) {
 	defer setup(t)()
 
+	// pass config twice to cover printing more than one index
+	args = []string{util.ConfigFile, util.ConfigFile}
 	entries = false
 	json = true
 
