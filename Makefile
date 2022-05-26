@@ -41,4 +41,4 @@ lint:
 	@$(GOPATH)/bin/golangci-lint run
 
 clean:
-	rm -f coverage.out coverage.html
+	rm -f out coverage.out coverage.html

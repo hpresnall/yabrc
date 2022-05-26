@@ -100,7 +100,7 @@ func BuildIndex(config index.Config, existingIdx *index.Index) (*index.Index, er
 	})
 
 	// index is truly empty, not just empty because all the files could not be read
-	if (idx.Size() == 0) && errCount > 0 {
+	if (idx.Size() == 0) && (errCount > 0) {
 		err = errors.New("no files successfully read from '" + idx.Root() + "'")
 	}
 

@@ -9,3 +9,5 @@ out
 cover*.out
 cover*.html
 cover*.tmp
+
+.DS_STORE

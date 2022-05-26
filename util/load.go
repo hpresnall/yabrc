@@ -24,7 +24,7 @@ func LoadConfig(configFile string) (index.Config, error) {
 }
 
 // LoadIndex loads the index defined by the given Config plus an (optional) identifier extension (e.g. _current, _known, etc).
-func LoadIndex(config index.Config, ext string) (idx *index.Index, err error) { // named returns here b/c gometalinter was erroring
+func LoadIndex(config index.Config, ext string) (idx *index.Index, err error) {
 	indexFile := GetIndexFile(config, ext)
 
 	idx, err = index.Load(indexFile)
