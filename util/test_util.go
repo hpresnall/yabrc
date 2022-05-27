@@ -89,13 +89,15 @@ func BuildTestIndex(t *testing.T, config index.Config) *index.Index {
 	makeDir(t, "testRoot/test2/ignored")
 	MakeFile(t, "testRoot/test1/"+"test1_1", "data1_1", 0644)
 	MakeFile(t, "testRoot/test2/"+"test2_1", "data2_1", 0644)
-	MakeFile(t, "testRoot/test2/sub1"+"test2_1", "data2_1", 0644)
-	MakeFile(t, "testRoot/test2/sub1"+"test2_2", "data2_2", 0644)
+	MakeFile(t, "testRoot/test2/sub1/"+"test2_sub1_1", "data2_sub1_1", 0644)
+	MakeFile(t, "testRoot/test2/sub1/"+"test2_sub1_2", "data2_1_2", 0644)
 	MakeFile(t, "testRoot/test2/ignored/ignored1", "ignored1", 0644) // should be skipped via Config.IgnoreDir()
 	// should not add 0 byte files
-	MakeFile(t, "testRoot/test2/sub1"+"test2_3", "", 0644)
-	//should not follow symlinks
-	MakeFile(t, "testRoot/test3"+"test3_1", "", os.ModeSymlink)
+	MakeFile(t, "testRoot/test2/sub1/"+"test2_3", "", 0644)
+	// should not index non-files but cannot test because afero's in-memory file system disallows non-file mode bits to be set
+	// should not index file manager metadata
+	MakeFile(t, "testRoot/.DS_Store", ".DS_Store", 0644)
+	MakeFile(t, "testRoot/desktop.ini", "desktop.ini", 0644)
 
 	idx, err := BuildIndex(config, nil)
 
@@ -104,7 +106,7 @@ func BuildTestIndex(t *testing.T, config index.Config) *index.Index {
 	}
 
 	if idx.Size() != 4 {
-		t.Fatal("Index should have 4 entries, not ", idx.Size(), idx.StringWithEntries())
+		t.Fatal("Index should have 4 entries, not", idx.Size(), idx.StringWithEntries())
 	}
 
 	return idx
