@@ -10,6 +10,7 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/afero"
 	log "github.com/spf13/jwalterweatherman"
+	"golang.org/x/text/unicode/norm"
 
 	"github.com/hpresnall/yabrc/index"
 )
@@ -31,6 +32,7 @@ func BuildIndex(config index.Config, existingIdx *index.Index) (*index.Index, er
 	dirCount := 0
 	zeroCount := 0
 	nonCount := 0
+	metadataCount := 0
 	hashedCount := 0
 	hashedBytes := int64(0)
 	existingCount := 0
@@ -44,6 +46,8 @@ func BuildIndex(config index.Config, existingIdx *index.Index) (*index.Index, er
 			return nil
 		}
 
+		path = norm.NFC.String(path) // normalize paths that contain Unicode combining characters to a single character
+
 		if info.IsDir() {
 			if config.IgnoreDir(path) {
 				log.DEBUG.Printf("skipping dir '%s'", path)
@@ -51,6 +55,10 @@ func BuildIndex(config index.Config, existingIdx *index.Index) (*index.Index, er
 			}
 
 			dirCount++
+			return nil
+		} else if strings.HasSuffix(path, "desktop.ini") || strings.HasSuffix(path, ".DS_Store") {
+			// do not index file manager metadata since these can change frequently
+			metadataCount++
 			return nil
 		}
 
@@ -105,7 +113,7 @@ func BuildIndex(config index.Config, existingIdx *index.Index) (*index.Index, er
 	}
 
 	d := time.Since(start)
-	skippedCount := zeroCount + nonCount + existingCount
+	skippedCount := zeroCount + nonCount + existingCount + metadataCount
 
 	dRounded := d.Round(time.Second)
 
@@ -118,7 +126,7 @@ func BuildIndex(config index.Config, existingIdx *index.Index) (*index.Index, er
 	log.INFO.Printf("%d directories, %d files hashed, %d errors; %.f files/sec; %s/sec\n", dirCount, hashedCount, errCount, float64(hashedCount)/d.Seconds(), humanize.Bytes(uint64(float64(hashedBytes)/d.Seconds())))
 
 	if skippedCount > 0 {
-		log.INFO.Printf("%d skipped (%s); %d not changed, %d zero byte, %d non-file", skippedCount, humanize.Bytes(uint64(skippedBytes)), existingCount, zeroCount, nonCount)
+		log.INFO.Printf("%d skipped (%s); %d not changed, %d zero byte, %d dir metadata, %d non-file", skippedCount, humanize.Bytes(uint64(skippedBytes)), existingCount, zeroCount, metadataCount, nonCount)
 	}
 
 	// return err from filepath.Walk(), if any
