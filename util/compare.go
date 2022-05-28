@@ -11,7 +11,7 @@ import (
 )
 
 // Compare examines the Entries in the given Indexes and returns true if they are all the same.
-func Compare(one *index.Index, two *index.Index) bool {
+func Compare(one *index.Index, two *index.Index, ignoreMissing bool) bool {
 	if one == two {
 		return true
 	}
@@ -31,8 +31,10 @@ func Compare(one *index.Index, two *index.Index) bool {
 		e2, exists2 := two.Get(path)
 
 		if !exists1 {
-			OnMissing(e2, one)
-			same = false
+			if !ignoreMissing {
+				OnMissing(e2, one)
+				same = false
+			}
 			continue
 		}
 		if !exists2 {
@@ -69,13 +71,9 @@ var OnHashChange HashFn
 func init() {
 	now := time.Now() // use fixed now to prevent time updating when there is a lot of output
 
-	outputTime := func(t time.Time) string {
-		return humanize.RelTime(t, now, "ago", "from now")
-	}
-
 	// default functions for Compare
 	OnMissing = func(missing index.Entry, other *index.Index) {
-		log.INFO.Printf("! '%s': '%s' %s\n", missing.Path(), other.Root(), outputTime(other.Timestamp()))
+		log.INFO.Printf("! '%s': '%s' %s\n", missing.Path(), other.Root(), outputTime(now, other.Timestamp()))
 	}
 
 	OnHashChange = func(e1 index.Entry, e2 index.Entry) {
@@ -89,11 +87,15 @@ func init() {
 				comparison = "<"
 			}
 
-			log.INFO.Printf("%s '%s': %s %s vs %s\n", comparison, e1.Path(), humanize.Bytes(uint64(diff)), outputTime(e1.LastMod()), outputTime(e2.LastMod()))
+			log.INFO.Printf("%s '%s': %s %s vs %s\n", comparison, e1.Path(), humanize.Bytes(uint64(diff)), outputTime(now, e1.LastMod()), outputTime(now, e2.LastMod()))
 		} else {
-			log.INFO.Printf("# '%s': %s vs %s\n", e1.Path(), outputTime(e1.LastMod()), outputTime(e2.LastMod()))
+			log.INFO.Printf("# '%s': %s vs %s\n", e1.Path(), outputTime(now, e1.LastMod()), outputTime(now, e2.LastMod()))
 		}
 	}
+}
+
+func outputTime(now time.Time, t time.Time) string {
+	return humanize.RelTime(t, now, "ago", "from now")
 }
 
 // sort all the Entry paths from the two indexes

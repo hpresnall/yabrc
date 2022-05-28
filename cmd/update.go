@@ -72,7 +72,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	if existingIdx != nil {
 		log.INFO.Println()
 		log.INFO.Printf("comparing '%s' %s vs %s\n", newIdx.Root(), humanize.Time(newIdx.Timestamp()), humanize.Time(existingIdx.Timestamp()))
-		same := util.Compare(newIdx, existingIdx)
+		same := util.Compare(newIdx, existingIdx, false)
 
 		if same {
 			log.INFO.Println("Indexes are the same")

@@ -17,6 +17,7 @@ Update scans the file system to create or update indexes. If the config file def
 ## `yabrc compare`
 Compare checks for differences between two existing indexes. Takes one or two config files as arguments. Returns `1` if there are any differences.
 * `--ext2`: the extension of the second index to compare. Defaults to `_current`.
+* `--ignore_missing`: ignore missing files in the *first* index. Meant to be used to compare partial backups. With this option, any file in the first index but not in the second will still be reported, so the partial index (or earlier version of the same index) should be specified first.
 
 To compare two versions of the same index, specify a single config file and `--ext`, `--ext2` or both.
 

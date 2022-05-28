@@ -7,17 +7,17 @@ import (
 )
 
 func TestCompareEmpty(t *testing.T) {
-	if !Compare(&index.Index{}, &index.Index{}) {
+	if !Compare(&index.Index{}, &index.Index{}, false) {
 		t.Error("empty indexes should be equal")
 	}
 }
 
 func TestCompareNil(t *testing.T) {
-	if !Compare(nil, nil) {
+	if !Compare(nil, nil, false) {
 		t.Error("two nil indexes should be equal")
 	}
 
-	if Compare(&index.Index{}, nil) {
+	if Compare(&index.Index{}, nil, false) {
 		t.Error("index compared to nil should be false")
 	}
 }
@@ -26,7 +26,7 @@ func TestCompareDifferentRoots(t *testing.T) {
 	idx1, _ := index.New("root1")
 	idx2, _ := index.New("root2")
 
-	if !Compare(idx1, idx2) {
+	if !Compare(idx1, idx2, false) {
 		t.Error("indexes with different roots should be equal")
 	}
 }
@@ -37,7 +37,7 @@ func TestCompareSame(t *testing.T) {
 
 	idx := BuildTestIndex(t, config)
 
-	if !Compare(idx, idx) {
+	if !Compare(idx, idx, false) {
 		t.Error("index should equal itself")
 	}
 }
@@ -49,7 +49,7 @@ func TestCompareEqual(t *testing.T) {
 	idx1 := BuildTestIndex(t, config)
 	idx2 := BuildTestIndex(t, config)
 
-	if !Compare(idx1, idx2) {
+	if !Compare(idx1, idx2, false) {
 		t.Error("indexes should be equal")
 	}
 }
@@ -74,6 +74,7 @@ func TestCompare(t *testing.T) {
 	idx1.Add("testRoot/"+"test4/"+"test4_1", info4)
 
 	idx2.Add("testRoot/"+"test5/"+"test5_1", info5)
+	//idx2.Add("testRoot/"+"test5/"+"test5_1", info6)
 
 	// track changes; ensure everything is removed
 	comparisons := make(map[string]struct{})
@@ -100,11 +101,21 @@ func TestCompare(t *testing.T) {
 		OnHashChange = oldHash
 	}()
 
-	if Compare(idx1, idx2) {
+	if Compare(idx1, idx2, false) {
 		t.Error("indexes should not be equal")
 	}
 
 	if len(comparisons) != 0 {
-		t.Error("not all cases were detected", comparisons)
+		t.Error("not all comparison cases were detected", comparisons)
+	}
+
+	// run again with ignoreMissing; Compare should ignore test5 since it is only in idx2
+	comparisons["test5/"+"test5_1"] = struct{}{}
+
+	if Compare(idx1, idx2, true) {
+		t.Error("indexes should not be equal when ignoreMissing is true")
+	}
+	if len(comparisons) != 1 {
+		t.Error("ignoreMissing did not ignore missing file")
 	}
 }

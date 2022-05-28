@@ -9,10 +9,12 @@ import (
 )
 
 var ext2 string
+var ignoreMissing bool
 
 func init() {
 	// default to _current to compare current values of 2 indexes (i.e. 2 filesystems)
 	compareCmd.Flags().StringVar(&ext2, "ext2", "_current", "extension for the second index")
+	compareCmd.Flags().BoolVar(&ignoreMissing, "ignore_missing", false, "ignore missing files in the _first_ index")
 }
 
 var compareCmd = &cobra.Command{
@@ -48,7 +50,7 @@ func runCompare(cmd *cobra.Command, args []string) error {
 
 	log.INFO.Println()
 
-	same := util.Compare(newIdx, oldIdx)
+	same := util.Compare(newIdx, oldIdx, ignoreMissing)
 
 	if !same {
 		return errors.New("") // empty error message => no error logged in main()

@@ -69,7 +69,7 @@ func TestLoadAndStoreIndex(t *testing.T) {
 		t.Error("should be able to load index", err)
 	}
 
-	if !Compare(idx, idx2) {
+	if !Compare(idx, idx2, false) {
 		t.Error("indexes should be equal")
 	}
 }

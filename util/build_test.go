@@ -69,7 +69,7 @@ func TestBuildIndex(t *testing.T) {
 		t.Error("Index size should be the same", idx.Size(), newIdx.Size())
 	}
 
-	if !Compare(idx, newIdx) {
+	if !Compare(idx, newIdx, false) {
 		t.Error("fast path Index should the same as previous")
 	}
 }
