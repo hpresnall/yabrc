@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hpresnall/yabrc/index"
+	log "github.com/spf13/jwalterweatherman"
 )
 
 func TestBuildIndexBadConfig(t *testing.T) {
@@ -58,7 +59,9 @@ func TestBuildIndex(t *testing.T) {
 	updated := time.Now().Add(time.Second * 5)
 	index.GetIndexFs().Chtimes("testRoot/test2/sub1"+"test2_2", updated, updated)
 
-	// test fast path branch with existing index
+	// test fast path branch with existing index; changing a single file
+	log.SetLogThreshold(log.LevelTrace)
+	MakeFile(t, "testRoot/test2/sub1/"+"test2_sub1_2", "data2_1_2 updated", 0644)
 	newIdx, err := BuildIndex(c, idx)
 
 	if err != nil {
@@ -69,7 +72,7 @@ func TestBuildIndex(t *testing.T) {
 		t.Error("Index size should be the same", idx.Size(), newIdx.Size())
 	}
 
-	if !Compare(idx, newIdx, false) {
-		t.Error("fast path Index should the same as previous")
+	if Compare(idx, newIdx, false) {
+		t.Error("fast path Index should different from previous")
 	}
 }

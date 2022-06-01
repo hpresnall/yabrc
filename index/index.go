@@ -285,7 +285,7 @@ func (idx *Index) AddEntry(entry Entry) error {
 			// add the entry without changing its path
 			idx.data[entry.path] = entry
 
-			log.DEBUG.Printf("%v: added %v\n", idx, entry)
+			log.TRACE.Printf("%v: added %v\n", idx, entry)
 		} else {
 			idx.addEntryToMap(entry)
 		}
@@ -303,7 +303,7 @@ func (idx *Index) addEntryToMap(entry Entry) {
 
 	idx.data[pathFromRoot] = entry
 
-	log.DEBUG.Printf("%v: added %v\n", idx, entry)
+	log.TRACE.Printf("%v: added %v\n", idx, entry)
 }
 
 // GetRelativePath returns the given path without the Index root.

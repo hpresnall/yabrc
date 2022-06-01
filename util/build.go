@@ -53,6 +53,7 @@ func BuildIndex(config index.Config, existingIdx *index.Index) (*index.Index, er
 				log.DEBUG.Printf("skipping dir '%s'", path)
 				return filepath.SkipDir
 			}
+			log.DEBUG.Printf("indexing dir '%s'", path)
 
 			dirCount++
 			return nil
@@ -84,16 +85,24 @@ func BuildIndex(config index.Config, existingIdx *index.Index) (*index.Index, er
 			if exists &&
 				(entry.Size() == info.Size()) &&
 				(infoTime.Before(entry.LastMod()) || infoTime.Equal(entry.LastMod())) {
+				if log.GetLogThreshold() == log.LevelTrace {
+					log.TRACE.Printf("skipping '%s': '%v' vs '%v' & '%d' vs '%d'", relativePath, info.ModTime(), entry.LastMod(), info.Size(), entry.Size())
+				}
 				existingCount++
 				skippedBytes += info.Size()
 				err = idx.AddEntry(entry)
 			} else {
-				log.TRACE.Printf("rescanning '%s': '%v' vs '%v' & '%d' vs '%d'", relativePath, info.ModTime(), entry.LastMod(), info.Size(), entry.Size())
+				if log.GetLogThreshold() <= log.LevelDebug {
+					log.DEBUG.Printf("rescanning '%s': '%v' vs '%v' & '%d' vs '%d'", relativePath, info.ModTime(), entry.LastMod(), info.Size(), entry.Size())
+				}
 				hashedCount++
 				hashedBytes += info.Size()
 				err = idx.Add(path, info)
 			}
 		} else {
+			if log.GetLogThreshold() <= log.LevelDebug {
+				log.DEBUG.Printf("adding '%s': '%v' & '%d'", path, info.ModTime(), info.Size())
+			}
 			hashedCount++
 			hashedBytes += info.Size()
 			err = idx.Add(path, info)

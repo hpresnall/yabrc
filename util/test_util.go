@@ -9,6 +9,7 @@ import (
 
 	"github.com/hpresnall/yabrc/index"
 	"github.com/spf13/afero"
+	log "github.com/spf13/jwalterweatherman"
 	"github.com/spf13/viper"
 )
 
@@ -99,10 +100,11 @@ func BuildTestIndex(t *testing.T, config index.Config) *index.Index {
 	MakeFile(t, "testRoot/.DS_Store", ".DS_Store", 0644)
 	MakeFile(t, "testRoot/desktop.ini", "desktop.ini", 0644)
 
+	log.SetLogThreshold(log.LevelTrace)
 	idx, err := BuildIndex(config, nil)
 
 	if err != nil {
-		t.Fatal("should be able to build an Index", err)
+		t.Fatal("should be able to build an Index;", err)
 	}
 
 	if idx.Size() != 4 {
