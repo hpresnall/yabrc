@@ -10,7 +10,6 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/afero"
 	log "github.com/spf13/jwalterweatherman"
-	"golang.org/x/text/unicode/norm"
 
 	"github.com/hpresnall/yabrc/index"
 )
@@ -45,8 +44,6 @@ func BuildIndex(config index.Config, existingIdx *index.Index) (*index.Index, er
 			log.WARN.Println("error reading file:", err.Error())
 			return nil
 		}
-
-		path = norm.NFC.String(path) // normalize paths that contain Unicode combining characters to a single character
 
 		if info.IsDir() {
 			if config.IgnoreDir(path) {

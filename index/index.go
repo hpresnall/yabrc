@@ -43,7 +43,7 @@ func New(root string) (*Index, error) {
 		return &Index{}, errors.New("root cannot be empty")
 	}
 	// note Clean assumes / separator; assume the same here
-	root = path.Clean(root)
+	root = norm.NFC.String(path.Clean(root))
 
 	// add trailing / to root so Index Entries do not start with /; see Add()
 	if !strings.HasSuffix(root, "/") {
@@ -261,7 +261,7 @@ func (idx *Index) Add(path string, info os.FileInfo) error {
 	}
 
 	// ensure Windows \ are changed to /
-	path = strings.Replace(path, "\\", "/", -1)
+	path = norm.NFC.String(strings.Replace(path, "\\", "/", -1))
 
 	if !strings.HasPrefix(path, idx.Root()) {
 		return fmt.Errorf("%v: path '%s' does not start with root", idx, path)
@@ -308,6 +308,7 @@ func (idx *Index) addEntryToMap(entry Entry) {
 
 // GetRelativePath returns the given path without the Index root.
 func (idx *Index) GetRelativePath(path string) string {
+	path = norm.NFC.String(path)
 	if strings.HasPrefix(path, idx.Root()) {
 		pathFromRoot := string([]rune(path)[idx.rootLen:])
 

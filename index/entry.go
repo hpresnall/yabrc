@@ -11,6 +11,7 @@ import (
 	"time"
 
 	humanize "github.com/dustin/go-humanize"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Entry represents the data for a single file in the Index.
@@ -33,12 +34,13 @@ func buildEntry(path string, info os.FileInfo) (Entry, error) {
 		return e, errors.New("info cannot be nil")
 	}
 
-	if gopath.Base(path) != info.Name() {
+	base := gopath.Base(path)
+	if base != norm.NFC.String(info.Name()) {
 		return e, fmt.Errorf("path '%s' does not match FileInfo.Name() '%s'", path, info.Name())
 	}
 
-	// read all of the file into sha256
-	file, err := indexFs.Open(path)
+	// read all of the file into sha256; use the actual file name, not the normalized path
+	file, err := indexFs.Open(gopath.Join(gopath.Dir(path), info.Name()))
 
 	if err != nil {
 		return e, err
@@ -57,7 +59,7 @@ func buildEntry(path string, info os.FileInfo) (Entry, error) {
 	sha := sha256er.Sum(nil)
 	base64 := base64.RawStdEncoding.EncodeToString(sha)
 
-	e.path = path
+	e.path = path // note using normalized path, not info.Name()
 	e.lastMod = info.ModTime()
 	e.size = info.Size()
 	e.hash = base64

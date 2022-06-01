@@ -9,6 +9,7 @@ import (
 
 	log "github.com/spf13/jwalterweatherman"
 	"github.com/spf13/viper"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Config represents the information need to load and store an Index on the filesystem.
@@ -72,7 +73,7 @@ func NewConfig(configFile string) (Config, error) {
 			continue
 		}
 
-		re, err := regexp.Compile(possibleRegex)
+		re, err := regexp.Compile(norm.NFC.String(possibleRegex))
 
 		if err != nil {
 			return config, err
@@ -103,6 +104,8 @@ func (c Config) SavePath() string {
 
 // IgnoreDir returns true if the given directory matches any of the ignored directory regular expressions.
 func (c Config) IgnoreDir(dir string) bool {
+	dir = norm.NFC.String(dir) // normalize to match compiled regexes
+
 	for _, re := range c.ignoredDirs {
 		if re.MatchString(dir) {
 			log.TRACE.Println(dir, "matches", re)
