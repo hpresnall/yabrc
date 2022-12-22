@@ -2,8 +2,9 @@
 vendor
 out
 
-# Eclipse config
+# IDE config
 .project
+.vscode
 
 # Go coverage reports
 cover*.out

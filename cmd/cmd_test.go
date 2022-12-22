@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/hpresnall/yabrc/index"
@@ -19,7 +19,7 @@ func setup(t *testing.T) func() {
 	log.SetStdoutThreshold(log.LevelError)
 
 	originalReader := reader
-	writer = ioutil.Discard
+	writer = io.Discard
 
 	var teardown func()
 	config, teardown = util.LoadTestConfig(t)

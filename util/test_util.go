@@ -80,7 +80,7 @@ func MakeFile(t *testing.T, path string, data string, perm os.FileMode) os.FileI
 	return info
 }
 
-//BuildTestIndex creates a file layout and builds the Index from those files.
+// BuildTestIndex creates a file layout and builds the Index from those files.
 func BuildTestIndex(t *testing.T, config index.Config) *index.Index {
 	makeDir(t, "testRoot/test1")
 	makeDir(t, "testRoot/test2")

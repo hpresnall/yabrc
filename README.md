@@ -6,7 +6,7 @@ yabrc is designed to be used for checking file integrity before and after backup
 The yabrc program compiles to a single executable with no dependencies so it is portable and easy to deploy. Configuration is done via a single properties file for each file system and scan results are stored in a single index file. Indexes are created by scanning the file system and hashing each file. Once created, the index can be compared to other indexes using the same executable.
 
 ## Build & Install
-yabrc uses `make` to configure and build. Go version 1.15 or higher is needed along with standard Unix tools like awk, bash and grep. Go modules are used for managing dependencies.
+yabrc uses `make` to configure and build. Go version 1.16 or higher is needed along with standard Unix tools like awk, bash and grep. Go modules are used for managing dependencies.
 
 1. Run `make setup` to install [golangci-lint](https://golangci-lint.run/) and download dependencies.
 2. Run `make` to lint, vet, test and build executables for Linux, MacOS and Windows.
