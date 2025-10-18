@@ -8,16 +8,17 @@ import (
 	"testing"
 
 	"github.com/hpresnall/yabrc/index"
+
 	"github.com/spf13/afero"
 	log "github.com/spf13/jwalterweatherman"
 	"github.com/spf13/viper"
 )
 
 // ConfigFile is the name of the config file used for testing.
-var ConfigFile = "config.properties"
+var ConfigFile = "config.yaml"
 
 // LoadTestConfig sets up a fake config file for use in tests.
-// It links the index file system into Viper, saves 'config.properties'
+// It links the index file system into Viper, saves 'config.yaml'
 // from the given string and then loads that file into a Config.
 // The unction returned should is for test teardown and should be called via defer.
 func LoadTestConfig(t *testing.T) (index.Config, func()) {
@@ -26,10 +27,10 @@ func LoadTestConfig(t *testing.T) (index.Config, func()) {
 	testFs := afero.NewMemMapFs()
 	index.SetIndexFs(testFs)
 
-	configString := `root=testRoot
-baseName=testBaseName
-savePath=testSavePath
-ignoredDirs=.*ignored.*`
+	configString := `root: testRoot
+baseName: testBaseName
+savePath: testSavePath
+ignoredDirs: .*ignored.*`
 	MakeFile(t, ConfigFile, configString, 0644)
 	// if MakeFile fails, index fs probably will not be cleaned up
 
@@ -37,7 +38,7 @@ ignoredDirs=.*ignored.*`
 		v.SetFs(index.GetIndexFs())
 	}
 
-	c, err := LoadConfig("config.properties")
+	c, err := LoadConfig(ConfigFile)
 
 	if err != nil {
 		// Fatal stops the goroutine before the caller can defer the teardown function

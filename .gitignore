@@ -1,6 +1,7 @@
 # build output
 vendor
 out
+__debug_bin*
 
 # IDE config
 .project

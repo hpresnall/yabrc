@@ -1,5 +1,5 @@
 # Command Reference
-In general, every command takes at least one argument: the properties file that defines the configuration of the index.
+In general, every command takes at least one argument: the YAML file that defines the configuration of the index.
 
 All commands support the following flags:
 * `--debug`: enable verbose logging

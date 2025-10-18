@@ -62,8 +62,7 @@ func NewConfig(configFile string) (Config, error) {
 
 	config.savePath = savePath
 
-	temp := v.GetString("ignoredDirs")
-	possibleRegexs := strings.Split(temp, ",")
+	possibleRegexs := v.GetStringSlice("ignoredDirs")
 	var ignoredDirs []*regexp.Regexp
 
 	for _, possibleRegex := range possibleRegexs {
@@ -118,7 +117,13 @@ func (c Config) IgnoreDir(dir string) bool {
 
 // Formats the config as a String.
 func (c Config) String() string {
-	return fmt.Sprintf("{root: '%s', baseName: '%s', savePath: '%s', ignoredDirs: %v}", c.root, c.baseName, c.savePath, c.ignoredDirs)
+	ignoredStrings := make([]string, len(c.ignoredDirs))
+
+	for i, re := range c.ignoredDirs {
+		ignoredStrings[i] = re.String()
+	}
+
+	return fmt.Sprintf("{root: '%s', baseName: '%s', savePath: '%s', ignoredDirs: [ %s ]}", c.root, c.baseName, c.savePath, strings.Join(ignoredStrings, ", "))
 }
 
 // ConfigViperHook is a hook function meant for testing.

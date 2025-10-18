@@ -3,7 +3,7 @@ yabrc is a file integrity checker designed to protect personal file backups from
 
 yabrc is designed to be used for checking file integrity before and after backups of complete file systems or large directory trees. It can easily be used to track changes to a single file system over time or the differences between two file systems. For backups, yabrc assumes that the file system structure is the same across backup storage systems and backups are mostly simple bulk copies. So, yabrc does not support a sophisticated set of file matching rules to compare different file systems.
 
-The yabrc program compiles to a single executable with no dependencies so it is portable and easy to deploy. Configuration is done via a single properties file for each file system and scan results are stored in a single index file. Indexes are created by scanning the file system and hashing each file. Once created, the index can be compared to other indexes using the same executable.
+The yabrc program compiles to a single executable with no dependencies so it is portable and easy to deploy. Configuration is done via a single YAML file for each file system and scan results are stored in a single index file. Indexes are created by scanning the file system and hashing each file. Once created, the index can be compared to other indexes using the same executable.
 
 ## Build & Install
 yabrc uses `make` to configure and build. Go version 1.16 or higher is needed along with standard Unix tools like awk, bash and grep. Go modules are used for managing dependencies.
@@ -16,25 +16,25 @@ yabrc uses `make` to configure and build. Go version 1.16 or higher is needed al
 See the [command reference](COMMANDS.md) for more information.
 
 ### Initial Configuration
-yabrc configuration is stored in properties files. You will need to create one for each file system or set of directories that you want to track. There are 4 properties, 2 of which are required:
+yabrc configuration is stored in YAML files. You will need to create a config file for each file system or set of directories that you want to track. There are 4 properties, 2 of which are required:
 * `root`: (_required_): the root file system or directory of this index.
 * `baseName`: (_required_): the default name of the index files created for this file system, _without_ extensions.
 * `savePath`: the default path for saving indexes. Defaults to the location of the config file.
-* `ignoredDirs`: a comma separated list of regular expressions. Any directory that matches one of the regexps will be skipped and no files or subdirectories will be added to the index.
+* `ignoredDirs`: a string or array of regular expressions. Any directory that matches one of the regexes will be skipped and no files or subdirectories will be added to the index.
 
 Usually you will create a pair of configuration files for each backup: one for the source and one for the target. In general only the `root` value needs be different.
 
 On Windows, note that all file paths are printed with `/`, not `\`. For ease of use, it is recommended that all Windows paths in the config file use `/`, e.g. `C:/Users/foo/Documents`. Internally, the index also uses `/` for all file paths so that Windows and Unix file systems can be compared with each other.
 
 ### First Run
-To build the initial index, run `yabrc update <config.properties>`. This will scan the given file system, starting at `root` and may take a while, depending on the total size of all the files. When complete, it will write the index to `<savePath>/<baseName>_current`.
+To build the initial index, run `yabrc update <config.yaml>`. This will scan the given file system, starting at `root` and may take a while, depending on the total size of all the files. When complete, it will write the index to `<savePath>/<baseName>_current`.
 
 ### Subsequent Runs
-Either periodically, or after making changes to the file system, the index can be updated by re-running `yabrc update <config.properties>`. After the scan is complete, it will compare the indexes and print the differences to std out. It will also move the older index to `<savePath>/<baseName>_<YYYYmmDD_HHMMSS>` and write the new index to `<savePath>/<baseName>_current`.
+Either periodically, or after making changes to the file system, the index can be updated by re-running `yabrc update <config.yaml>`. After the scan is complete, it will compare the indexes and print the differences to std out. It will also move the older index to `<savePath>/<baseName>_<YYYYmmDD_HHMMSS>` and write the new index to `<savePath>/<baseName>_current`.
 
-To compare two indexes after the fact, you can run something like `yabrc compare --ext _<YYYYmmDD_HHMMSS> <config.properties>`. Note that two indexes are specified: one by `--ext`; the other defaults to `_current`. This will compare the current, latest index against a previous one from the given datetime, identified by extension.
+To compare two indexes after the fact, you can run something like `yabrc compare --ext _<YYYYmmDD_HHMMSS> <config.yaml>`. Note that two indexes are specified: one by `--ext`; the other defaults to `_current`. This will compare the current, latest index against a previous one from the given datetime, identified by extension.
 
-To compare indexes from two different file systems, run something like `yabrc compare <fs1.properties> <fs2.properties>`, where two configurations are specified. This will compare the two `<baseName>_current` index files.
+To compare indexes from two different file systems, run something like `yabrc compare <fs1.yaml> <fs2.yaml>`, where two configurations are specified. This will compare the two `<baseName>_current` index files.
 
 When comparing indexes, the following symbols are used in the output the indicate changes to a file:
 * `!`: the file does not exist in one of the indexes.

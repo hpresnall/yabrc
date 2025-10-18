@@ -9,11 +9,11 @@ import (
 )
 
 func TestConfig(t *testing.T) {
-	// spaces in ignoredDirs to ensure they are trimmed; extra commas to ensure empty strings are not stored
-	config := `root=testRoot
-baseName=testBaseName
-savePath=testSavePath
-ignoredDirs=,,ignored.*, ,  test.* ,,
+	// spaces in ignoredDirs to ensure they are trimmed; also ensure empty strings are not stored
+	config := `root: testRoot
+baseName: testBaseName
+savePath: testSavePath
+ignoredDirs: [' ignored.* ', '', ' test.*']
 `
 	c, teardown, err := newConfigFromString(t, config)
 	defer teardown()
@@ -35,7 +35,7 @@ ignoredDirs=,,ignored.*, ,  test.* ,,
 	}
 
 	if len(c.ignoredDirs) != 2 {
-		t.Error("should have 2 regexps in ignoredDirs")
+		t.Fatal("should have 2 regexps in ignoredDirs")
 	}
 
 	if c.ignoredDirs[0].String() != "ignored.*" {
@@ -88,7 +88,7 @@ func TestConfigWithNoRoot(t *testing.T) {
 }
 
 func TestConfigWithNoBaseName(t *testing.T) {
-	_, teardown, err := newConfigFromString(t, "root=testRoot")
+	_, teardown, err := newConfigFromString(t, "root: testRoot")
 	defer teardown()
 
 	if err == nil {
@@ -97,8 +97,8 @@ func TestConfigWithNoBaseName(t *testing.T) {
 }
 
 func TestConfigWithNoSavePath(t *testing.T) {
-	config := `root=testRoot
-baseName=testBaseName
+	config := `root: testRoot
+baseName: testBaseName
 `
 	c, teardown, err := newConfigFromString(t, config)
 	defer teardown()
@@ -113,8 +113,8 @@ baseName=testBaseName
 }
 
 func TestConfigWithNoIgnoredDirs(t *testing.T) {
-	config := `root=testRoot
-baseName=testBaseName
+	config := `root: testRoot
+baseName: testBaseName
 `
 	c, teardown, err := newConfigFromString(t, config)
 	defer teardown()
@@ -133,9 +133,9 @@ baseName=testBaseName
 }
 
 func TestConfigWithBadIgnoredDirs(t *testing.T) {
-	config := `root=testRoot
-baseName=testBaseName
-ignoredDirs=[
+	config := `root: testRoot
+baseName: testBaseName
+ignoredDirs: [
 `
 	_, teardown, err := newConfigFromString(t, config)
 	defer teardown()
@@ -147,11 +147,11 @@ ignoredDirs=[
 
 // calls setupTestFs()
 // links the index file system into Viper
-// creates 'config.properties' from the given string and loads it
+// creates 'config.yaml' from the given string and loads it
 func newConfigFromString(t *testing.T, configString string) (Config, func(), error) {
 	testFs, testFsTeardown := setupTestFs()
 
-	err := afero.WriteFile(testFs, "config.properties", []byte(configString), 0644)
+	err := afero.WriteFile(testFs, "config.yaml", []byte(configString), 0644)
 
 	if err != nil {
 		// Fatal stops the goroutine before the caller can defer the teardown function
@@ -159,7 +159,7 @@ func newConfigFromString(t *testing.T, configString string) (Config, func(), err
 		testFsTeardown()
 		ConfigViperHook = func(v *viper.Viper) {}
 
-		t.Fatal("cannot make file", "config.properties", err)
+		t.Fatal("cannot make file", "config.yaml", err)
 	}
 
 	ConfigViperHook = func(v *viper.Viper) {
@@ -168,7 +168,7 @@ func newConfigFromString(t *testing.T, configString string) (Config, func(), err
 
 	log.DEBUG.Printf("loading config from '%s'\n", configString)
 
-	c, err := NewConfig("config.properties")
+	c, err := NewConfig("config.yaml")
 
 	return c, func() {
 		testFsTeardown()

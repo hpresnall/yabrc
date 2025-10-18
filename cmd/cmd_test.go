@@ -6,6 +6,7 @@ import (
 
 	"github.com/hpresnall/yabrc/index"
 	"github.com/hpresnall/yabrc/util"
+
 	log "github.com/spf13/jwalterweatherman"
 )
 
@@ -69,7 +70,7 @@ func TestPrint(t *testing.T) {
 	}
 
 	// call with debug for coverage
-	rootCmd.SetArgs([]string{"print", "--debug", "config.properties"})
+	rootCmd.SetArgs([]string{"print", "--debug", util.ConfigFile})
 	err = rootCmd.Execute()
 
 	if err != nil {
