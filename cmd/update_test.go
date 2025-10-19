@@ -188,6 +188,32 @@ func TestUpdateNewOverwrite(t *testing.T) {
 	}
 }
 
+func TestUpdateBadConfig(t *testing.T) {
+	defer setupUpdate(t)()
+
+	if err := runUpdate(nil, []string{"invalid"}); err == nil {
+		t.Error("should error on invalid config", err)
+	}
+}
+
+func TestUpdateBadIndex(t *testing.T) {
+	defer setupUpdate(t)()
+
+	// delete index => update will just create a new one ...
+	if err := index.GetIndexFs().Remove(util.GetIndexFile(config, ext)); err != nil {
+		t.Fatalf("cannot remove index from file system")
+	}
+
+	// so, also delete config root so no updated index is built
+	if err := index.GetIndexFs().RemoveAll(config.Root()); err != nil {
+		t.Fatalf("cannot remove index from file system")
+	}
+
+	if err := runUpdate(nil, args); err == nil {
+		t.Error("should error on invalid index", err)
+	}
+}
+
 func runAndValidate(t *testing.T) {
 	if err := runUpdate(nil, args); err != nil {
 		t.Fatal("should not error on update", err)

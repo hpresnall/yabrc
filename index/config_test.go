@@ -79,7 +79,7 @@ func TestMissingConfig(t *testing.T) {
 }
 
 func TestConfigWithNoRoot(t *testing.T) {
-	_, teardown, err := newConfigFromString(t, "baseName=testBaseName")
+	_, teardown, err := newConfigFromString(t, "baseName: testBaseName")
 	defer teardown()
 
 	if err == nil {
@@ -113,9 +113,26 @@ baseName: testBaseName
 }
 
 func TestConfigWithNoIgnoredDirs(t *testing.T) {
-	config := `root: testRoot
+	testNoIgnoredDirs(t, `root: testRoot
 baseName: testBaseName
-`
+`)
+}
+func TestConfigWithEmptyIgnoredDirs(t *testing.T) {
+	testNoIgnoredDirs(t, `root: testRoot
+baseName: testBaseName
+ignoredDirs: []
+`)
+}
+
+func TestConfigWithNilIgnoredDirs(t *testing.T) {
+	// config should load with an empty array
+	testNoIgnoredDirs(t, `root: testRoot
+baseName: testBaseName
+ignoredDirs:
+`)
+}
+
+func testNoIgnoredDirs(t *testing.T, config string) {
 	c, teardown, err := newConfigFromString(t, config)
 	defer teardown()
 
@@ -124,7 +141,7 @@ baseName: testBaseName
 	}
 
 	if c.ignoredDirs != nil {
-		t.Fatal("ignoredDirs should be nil")
+		t.Fatal("ignoredDirs should not be nil")
 	}
 
 	if len(c.ignoredDirs) != 0 {
@@ -132,16 +149,40 @@ baseName: testBaseName
 	}
 }
 
-func TestConfigWithBadIgnoredDirs(t *testing.T) {
+func TestConfigWithStringIgnoredDirs(t *testing.T) {
+	// spaces in ignoredDirs to ensure they are trimmed
 	config := `root: testRoot
 baseName: testBaseName
-ignoredDirs: [
+savePath: testSavePath
+ignoredDirs: ' ignored.* '
+`
+	c, teardown, err := newConfigFromString(t, config)
+	defer teardown()
+
+	if err != nil {
+		t.Fatal("cannot load config", err)
+	}
+
+	if len(c.ignoredDirs) != 1 {
+		t.Fatal("should have 1 regexp in ignoredDirs")
+	}
+
+	if c.ignoredDirs[0].String() != "ignored.*" {
+		t.Errorf("%s[%d] should be '%s' not '%s'", "ignoredDirs", 0, "ignored.*", c.ignoredDirs[0].String())
+	}
+}
+
+func TestConfigWithInvalidIgnoredDirs(t *testing.T) {
+	config := `root: testRoot
+baseName: testBaseName
+savePath: testSavePath
+ignoredDirs: ' [] '
 `
 	_, teardown, err := newConfigFromString(t, config)
 	defer teardown()
 
 	if err == nil {
-		t.Fatal("should not load config with bad ignoredDirs", err)
+		t.Error("should not be able to load config with invalid ignoredDirs", err)
 	}
 }
 

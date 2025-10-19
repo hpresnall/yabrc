@@ -7,12 +7,17 @@ import (
 	log "github.com/spf13/jwalterweatherman"
 )
 
+// only used for testing
+var shouldExit = true
+
 func main() {
 	if err := cmd.Execute(); err != nil {
 		if err.Error() != "" {
 			log.ERROR.Println(err)
 		}
 
-		os.Exit(1)
+		if shouldExit {
+			os.Exit(1)
+		}
 	}
 }

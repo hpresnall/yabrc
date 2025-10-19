@@ -36,15 +36,21 @@ func setup(t *testing.T) func() {
 		reader = originalReader
 
 		args = nil
+
+		// reset all command flags to default
+		ext = "_current"
+
+		// from print
 		entries = false
 		json = false
 
-		ext = "_current"
+		// from compare
 		ext2 = "_current"
 
-		overwrite = false
-		autosave = false
+		// from update
 		fast = false
+		autosave = false
+		overwrite = false
 	}
 }
 
@@ -112,6 +118,18 @@ func TestPrintBoth(t *testing.T) {
 
 	if err := runPrint(nil, args); err == nil {
 		t.Error("should error on print with entries & json")
+	}
+}
+
+func TestPrintBadIndex(t *testing.T) {
+	defer setup(t)()
+
+	if err := index.GetIndexFs().Remove(util.GetIndexFile(config, ext)); err != nil {
+		t.Fatalf("cannot remove index from file system")
+	}
+
+	if err := runPrint(nil, args); err == nil {
+		t.Error("should error on invalid config", err)
 	}
 }
 

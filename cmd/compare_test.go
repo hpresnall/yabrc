@@ -59,3 +59,15 @@ func TestCompareTwoConfigs(t *testing.T) {
 		t.Error("should not error on compare", err)
 	}
 }
+
+func TestCompareBadConfig(t *testing.T) {
+	defer setup(t)()
+
+	if err := runCompare(nil, []string{"invalid", util.ConfigFile}); err == nil {
+		t.Error("should error on invalid config", err)
+	}
+
+	if err := runCompare(nil, []string{util.ConfigFile, "invalid"}); err == nil {
+		t.Error("should error on invalid config", err)
+	}
+}
