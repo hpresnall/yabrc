@@ -6,10 +6,11 @@ import (
 	golog "log"
 	"os"
 
-	"github.com/hpresnall/yabrc/index"
-	"github.com/hpresnall/yabrc/util"
 	"github.com/spf13/cobra"
 	log "github.com/spf13/jwalterweatherman"
+
+	"github.com/hpresnall/yabrc/config"
+	"github.com/hpresnall/yabrc/index"
 )
 
 var version = "test"
@@ -60,13 +61,13 @@ func Execute() error {
 
 // helper function to load a Config and Index
 func loadIndex(configFile string, ext string) (*index.Index, error) {
-	config, err := util.LoadConfig(configFile)
+	config, err := config.Load(configFile)
 
 	if err != nil {
 		return nil, err
 	}
 
-	idx, err := util.LoadIndex(config, ext)
+	idx, err := index.Load(config, ext)
 
 	if err != nil {
 		return nil, err

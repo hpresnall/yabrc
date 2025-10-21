@@ -14,17 +14,11 @@ import (
 	"unicode/utf8"
 
 	humanize "github.com/dustin/go-humanize"
-	"github.com/spf13/afero"
 	log "github.com/spf13/jwalterweatherman"
 	"golang.org/x/text/unicode/norm"
+
+	"github.com/hpresnall/yabrc/file"
 )
-
-// use a file system wrapper to allow for testing
-var indexFs afero.Fs
-
-func init() {
-	indexFs = afero.NewOsFs()
-}
 
 // Index stores data for all files under a particular root directory.
 type Index struct {
@@ -54,9 +48,9 @@ func New(root string) (*Index, error) {
 	return &Index{root: root, rootLen: utf8.RuneCountInString(root), timestamp: time.Now().Truncate(time.Second), data: make(map[string]Entry)}, nil
 }
 
-// Load loads an existing index from the given path.
+// load loads an existing index from the given path.
 // Bad data in the Index will be logged but processing will continue to the end of the file.
-func Load(path string) (*Index, error) {
+func load(path string) (*Index, error) {
 	// fix \ to /
 	path = strings.Replace(path, "\\", "/", -1)
 
@@ -64,7 +58,7 @@ func Load(path string) (*Index, error) {
 
 	var idx *Index
 
-	in, err := indexFs.Open(path)
+	in, err := file.GetFs().Open(path)
 
 	if err != nil {
 		return idx, err
@@ -185,7 +179,7 @@ func (idx *Index) Store(path string) error {
 
 	log.DEBUG.Printf("storing Index to '%s'", path)
 
-	out, err := indexFs.Create(path)
+	out, err := file.GetFs().Create(path)
 
 	if err != nil {
 		return err
@@ -376,20 +370,4 @@ func (idx *Index) StringWithEntries() string {
 	buffer.WriteString("]}")
 
 	return buffer.String()
-}
-
-// GetIndexFs gets the current filesystem used by the Index. Meant for testing.
-func GetIndexFs() afero.Fs {
-	// Fs is an interface => ok to return obj and not pointer
-	return indexFs
-}
-
-// SetIndexFs sets the current filesystem used by the Index. Meant for testing.
-// The behavior is undefined if this function is called between building an Index and adding Entries to it.
-func SetIndexFs(fs afero.Fs) {
-	if fs == nil {
-		panic("cannot use nil fs")
-	}
-
-	indexFs = fs
 }

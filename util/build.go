@@ -11,13 +11,15 @@ import (
 	"github.com/spf13/afero"
 	log "github.com/spf13/jwalterweatherman"
 
+	"github.com/hpresnall/yabrc/config"
+	"github.com/hpresnall/yabrc/file"
 	"github.com/hpresnall/yabrc/index"
 )
 
 // BuildIndex creates an Index by walking the file system from Config.Root().
 // If an existing Index is passed in, only new & updated files will be scanned. Other files will use
 // the existing Index's Entries.
-func BuildIndex(config index.Config, existingIdx *index.Index) (*index.Index, error) {
+func BuildIndex(config config.Config, existingIdx *index.Index) (*index.Index, error) {
 	idx, err := index.New(config.Root())
 
 	if err != nil {
@@ -38,7 +40,7 @@ func BuildIndex(config index.Config, existingIdx *index.Index) (*index.Index, er
 	errCount := 0
 	skippedBytes := int64(0)
 
-	err = afero.Walk(index.GetIndexFs(), idx.Root(), func(path string, info os.FileInfo, err error) error {
+	err = afero.Walk(file.GetFs(), idx.Root(), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			errCount++
 			log.WARN.Println("error reading file:", err.Error())

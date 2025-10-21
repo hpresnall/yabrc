@@ -3,7 +3,9 @@ package util
 import (
 	"testing"
 
+	"github.com/hpresnall/yabrc/config"
 	"github.com/hpresnall/yabrc/index"
+	"github.com/hpresnall/yabrc/test"
 )
 
 func TestCompareEmpty(t *testing.T) {
@@ -32,10 +34,10 @@ func TestCompareDifferentRoots(t *testing.T) {
 }
 
 func TestCompareSame(t *testing.T) {
-	config, teardown := LoadTestConfig(t)
+	config, teardown := config.ForTest(t)
 	defer teardown()
 
-	idx := BuildTestIndex(t, config)
+	idx := IndexForTest(t, config)
 
 	if !Compare(idx, idx, false) {
 		t.Error("index should equal itself")
@@ -43,11 +45,11 @@ func TestCompareSame(t *testing.T) {
 }
 
 func TestCompareEqual(t *testing.T) {
-	config, teardown := LoadTestConfig(t)
+	config, teardown := config.ForTest(t)
 	defer teardown()
 
-	idx1 := BuildTestIndex(t, config)
-	idx2 := BuildTestIndex(t, config)
+	idx1 := IndexForTest(t, config)
+	idx2 := IndexForTest(t, config)
 
 	if !Compare(idx1, idx2, false) {
 		t.Error("indexes should be equal")
@@ -55,18 +57,18 @@ func TestCompareEqual(t *testing.T) {
 }
 
 func TestCompare(t *testing.T) {
-	config, teardown := LoadTestConfig(t)
+	config, teardown := config.ForTest(t)
 	defer teardown()
 
-	idx1 := BuildTestIndex(t, config)
-	idx2 := BuildTestIndex(t, config)
+	idx1 := IndexForTest(t, config)
+	idx2 := IndexForTest(t, config)
 
 	// file paths must match BuildTestIndex()
-	info1 := MakeFile(t, "testRoot/"+"test1/"+"test1_1", "1", 0644)               // smaller
-	info2 := MakeFile(t, "testRoot/"+"test2/"+"test2_1", "data2_1 updated", 0644) // larger
-	info2_1 := MakeFile(t, "testRoot/test2/sub1"+"test2_2", "data2_x", 0644)      // different hash
-	info4 := MakeFile(t, "testRoot/"+"test4/"+"test4_1", "data4_1", 0644)         // missing
-	info5 := MakeFile(t, "testRoot/"+"test5/"+"test5_1", "data5_1", 0644)         // new
+	info1 := test.MakeFile(t, "testRoot/"+"test1/"+"test1_1", "1", 0644)               // smaller
+	info2 := test.MakeFile(t, "testRoot/"+"test2/"+"test2_1", "data2_1 updated", 0644) // larger
+	info2_1 := test.MakeFile(t, "testRoot/test2/sub1"+"test2_2", "data2_x", 0644)      // different hash
+	info4 := test.MakeFile(t, "testRoot/"+"test4/"+"test4_1", "data4_1", 0644)         // missing
+	info5 := test.MakeFile(t, "testRoot/"+"test5/"+"test5_1", "data5_1", 0644)         // new
 
 	idx1.Add("testRoot/"+"test1/"+"test1_1", info1)
 	idx1.Add("testRoot/"+"test2/"+"test2_1", info2)

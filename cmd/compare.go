@@ -3,9 +3,10 @@ package cmd
 import (
 	"errors"
 
-	"github.com/hpresnall/yabrc/util"
 	"github.com/spf13/cobra"
 	log "github.com/spf13/jwalterweatherman"
+
+	"github.com/hpresnall/yabrc/util"
 )
 
 var ext2 string

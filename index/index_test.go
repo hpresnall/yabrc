@@ -9,6 +9,9 @@ import (
 
 	"github.com/spf13/afero"
 	log "github.com/spf13/jwalterweatherman"
+
+	"github.com/hpresnall/yabrc/file"
+	"github.com/hpresnall/yabrc/test"
 )
 
 func TestNew(t *testing.T) {
@@ -76,7 +79,8 @@ func TestAdd(t *testing.T) {
 		t.Fatal("New failed", err)
 	}
 
-	testFs, teardown := setupTestFs()
+	teardown := test.SetupTestFs()
+	testFs := file.GetFs()
 	defer teardown()
 
 	err = testFs.MkdirAll("testdir", 0755)
@@ -287,7 +291,7 @@ func TestStoreAndLoad(t *testing.T) {
 		t.Error("could not add Entry to Index", err)
 	}
 
-	_, teardown := setupTestFs()
+	teardown := test.SetupTestFs()
 	defer teardown()
 
 	err = idx.Store("test")
@@ -296,7 +300,7 @@ func TestStoreAndLoad(t *testing.T) {
 		t.Error("should be able to store", err)
 	}
 
-	idx2, err := Load("test")
+	idx2, err := load("test")
 
 	if err != nil {
 		t.Error("should be able to load", err)
@@ -332,7 +336,11 @@ func TestStoreOnBadFs(t *testing.T) {
 		t.Fatal("New failed", err)
 	}
 
-	_, teardown := setupReadOnlyTestFs()
+	teardown := test.SetupTestFs()
+	rofs := afero.NewReadOnlyFs(file.GetFs())
+	file.SetFs(rofs)
+
+	// original teardown will reset index fs to original value
 	defer teardown()
 
 	err = idx.Store("invalid")
@@ -343,7 +351,7 @@ func TestStoreOnBadFs(t *testing.T) {
 }
 
 func TestLoadMissing(t *testing.T) {
-	_, err := Load("missing")
+	_, err := load("missing")
 
 	if err == nil {
 		t.Error("should not be able to load a missing file")
@@ -418,7 +426,7 @@ path,1,1,n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg`
 }
 
 func TestStoreZeroVal(t *testing.T) {
-	_, teardown := setupTestFs()
+	teardown := test.SetupTestFs()
 	defer teardown()
 
 	idx := &Index{}
@@ -429,18 +437,9 @@ func TestStoreZeroVal(t *testing.T) {
 	}
 }
 
-func TestSetIndexFs(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("should not be able to set the index fs to nil")
-		}
-	}()
-
-	SetIndexFs(nil)
-}
-
 func newIndexFromString(indexString string, t *testing.T) (*Index, error) {
-	testFs, teardown := setupTestFs()
+	teardown := test.SetupTestFs()
+	testFs := file.GetFs()
 	defer teardown()
 
 	// Load expects a gzipped file so store the given string
@@ -474,26 +473,5 @@ func newIndexFromString(indexString string, t *testing.T) (*Index, error) {
 
 	log.DEBUG.Printf("loading index from '%s'\n", indexString)
 
-	return Load("test")
-}
-
-// create a filesystem for testing
-// the returned function must be called / deferred in tests
-func setupTestFs() (afero.Fs, func()) {
-	oldFs := GetIndexFs()
-
-	testFs := afero.NewMemMapFs()
-	SetIndexFs(testFs)
-
-	return testFs, func() {
-		SetIndexFs(oldFs)
-	}
-}
-
-func setupReadOnlyTestFs() (afero.Fs, func()) {
-	testFs, teardown := setupTestFs()
-	rofs := afero.NewReadOnlyFs(testFs)
-	SetIndexFs(rofs)
-	// original teardown will reset index fs to original value
-	return rofs, teardown
+	return load("test")
 }

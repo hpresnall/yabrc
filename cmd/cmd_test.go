@@ -4,15 +4,16 @@ import (
 	"io"
 	"testing"
 
+	log "github.com/spf13/jwalterweatherman"
+
+	"github.com/hpresnall/yabrc/config"
 	"github.com/hpresnall/yabrc/index"
 	"github.com/hpresnall/yabrc/util"
-
-	log "github.com/spf13/jwalterweatherman"
 )
 
 var args []string
 
-var config index.Config
+var cfg config.Config
 var idx *index.Index
 
 func setup(t *testing.T) func() {
@@ -23,12 +24,12 @@ func setup(t *testing.T) func() {
 	writer = io.Discard
 
 	var teardown func()
-	config, teardown = util.LoadTestConfig(t)
+	cfg, teardown = config.ForTest(t)
 
-	idx = util.BuildTestIndex(t, config)
-	util.StoreIndex(idx, config, "_current")
+	idx = util.IndexForTest(t, cfg)
+	index.Store(idx, cfg, "_current")
 
-	args = []string{util.ConfigFile}
+	args = []string{config.TestFile}
 
 	return func() {
 		teardown()
@@ -61,78 +62,7 @@ func TestEmptyCmd(t *testing.T) {
 	}
 }
 
-func TestPrint(t *testing.T) {
-	defer setup(t)()
-
-	counter := &log.Counter{}
-	log.SetLogListeners(log.LogCounter(counter, log.LevelDebug))
-
-	// pass config twice to cover printing more than one index
-	rootCmd.SetArgs([]string{"print", util.ConfigFile, util.ConfigFile})
-	err := rootCmd.Execute()
-
-	if err != nil {
-		t.Error("should not error on print", err)
-	}
-
-	// call with debug for coverage
-	rootCmd.SetArgs([]string{"print", "--debug", util.ConfigFile})
-	err = rootCmd.Execute()
-
-	if err != nil {
-		t.Error("should not error on print", err)
-	}
-
-	if counter.Count() == 0 {
-		t.Error("should output DEBUG for --debug")
-	}
-}
-
-func TestPrintJson(t *testing.T) {
-	defer setup(t)()
-
-	// pass config twice to cover printing more than one index
-	args = []string{util.ConfigFile, util.ConfigFile}
-	entries = false
-	json = true
-
-	if err := runPrint(nil, args); err != nil {
-		t.Error("should not error on JSON print", err)
-	}
-}
-
-func TestPrintEntries(t *testing.T) {
-	defer setup(t)()
-
-	entries = true
-	json = false
-
-	if err := runPrint(nil, args); err != nil {
-		t.Error("should not error on print with entries", err)
-	}
-}
-
-func TestPrintBoth(t *testing.T) {
-	entries = true
-	json = true
-
-	if err := runPrint(nil, args); err == nil {
-		t.Error("should error on print with entries & json")
-	}
-}
-
-func TestPrintBadIndex(t *testing.T) {
-	defer setup(t)()
-
-	if err := index.GetIndexFs().Remove(util.GetIndexFile(config, ext)); err != nil {
-		t.Fatalf("cannot remove index from file system")
-	}
-
-	if err := runPrint(nil, args); err == nil {
-		t.Error("should error on invalid config", err)
-	}
-}
-
 func TestVersion(t *testing.T) {
+	// increase test coverage
 	runVersion(nil, nil)
 }

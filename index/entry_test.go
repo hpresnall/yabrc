@@ -6,6 +6,9 @@ import (
 	"time"
 
 	"github.com/spf13/afero"
+
+	"github.com/hpresnall/yabrc/file"
+	"github.com/hpresnall/yabrc/test"
 )
 
 func TestEntryFromFile(t *testing.T) {
@@ -123,17 +126,20 @@ func TestValidEntry(t *testing.T) {
 }
 
 func setupEntryFs(t *testing.T) (afero.Fs, os.FileInfo, func()) {
-	testFs, teardown := setupTestFs()
+	teardown := test.SetupTestFs()
+	testFs := file.GetFs()
 
 	err := afero.WriteFile(testFs, "test", []byte("test"), 0644)
 
 	if err != nil {
+		teardown()
 		t.Fatal("cannot make file", "test", err)
 	}
 
 	info, err := testFs.Stat("test")
 
 	if err != nil {
+		teardown()
 		t.Fatal("cannot load FileInfo", err)
 	}
 

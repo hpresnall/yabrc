@@ -1,11 +1,11 @@
-package index
+package config
 
 import (
 	"testing"
 
 	"github.com/spf13/afero"
-	log "github.com/spf13/jwalterweatherman"
-	"github.com/spf13/viper"
+
+	"github.com/hpresnall/yabrc/file"
 )
 
 func TestConfig(t *testing.T) {
@@ -63,15 +63,15 @@ ignoredDirs: [' ignored.* ', '', ' test.*']
 }
 
 func TestEmptyConfig(t *testing.T) {
-	_, err := NewConfig("")
+	_, err := new("")
 
 	if err == nil {
 		t.Error("should not be able to load empty config", err)
 	}
 }
 
-func TestMissingConfig(t *testing.T) {
-	_, err := NewConfig("missing")
+func TestInvalidConfig(t *testing.T) {
+	_, err := new("missing")
 
 	if err == nil {
 		t.Error("should not create a config from missing file")
@@ -186,33 +186,41 @@ ignoredDirs: ' [] '
 	}
 }
 
+func TestLoadMissingConfig(t *testing.T) {
+	_, err := Load("missing")
+
+	if err == nil {
+		t.Error("should not be able to load config from a missing file")
+	}
+}
+
 // calls setupTestFs()
 // links the index file system into Viper
 // creates 'config.yaml' from the given string and loads it
 func newConfigFromString(t *testing.T, configString string) (Config, func(), error) {
-	testFs, testFsTeardown := setupTestFs()
+	teardown := setupViperForTest()
 
-	err := afero.WriteFile(testFs, "config.yaml", []byte(configString), 0644)
+	// not using file.MakeFile() because failures there would not call teardown()
+	err := afero.WriteFile(file.GetFs(), TestFile, []byte(configString), 0644)
 
 	if err != nil {
 		// Fatal stops the goroutine before the caller can defer the teardown function
 		// run it manually now
-		testFsTeardown()
-		ConfigViperHook = func(v *viper.Viper) {}
-
-		t.Fatal("cannot make file", "config.yaml", err)
+		teardown()
+		t.Fatal("cannot make file", TestFile, err)
 	}
 
-	ConfigViperHook = func(v *viper.Viper) {
-		v.SetFs(GetIndexFs())
+	c, err := new(TestFile)
+
+	return c, teardown, err
+}
+
+// for coverage
+func TestConfigForTest(t *testing.T) {
+	config, teardown := ForTest(t)
+	defer teardown()
+
+	if config.root != "testRoot" {
+		t.Fatal("should have created valid config")
 	}
-
-	log.DEBUG.Printf("loading config from '%s'\n", configString)
-
-	c, err := NewConfig("config.yaml")
-
-	return c, func() {
-		testFsTeardown()
-		ConfigViperHook = func(v *viper.Viper) {}
-	}, err
 }

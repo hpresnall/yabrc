@@ -4,13 +4,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hpresnall/yabrc/index"
+	"github.com/hpresnall/yabrc/config"
+	"github.com/hpresnall/yabrc/file"
+	"github.com/hpresnall/yabrc/test"
 
 	log "github.com/spf13/jwalterweatherman"
 )
 
 func TestBuildIndexBadConfig(t *testing.T) {
-	_, err := BuildIndex(index.Config{}, nil)
+	_, err := BuildIndex(config.Config{}, nil)
 
 	if err == nil {
 		t.Error("should not be able to create an index with a nil config")
@@ -18,11 +20,11 @@ func TestBuildIndexBadConfig(t *testing.T) {
 }
 
 func TestBuildEmptyIndex(t *testing.T) {
-	config, teardown := LoadTestConfig(t)
+	config, teardown := config.ForTest(t)
 	defer teardown()
 
 	// root directory exists; sub directory with no files
-	makeDir(t, "testRoot/test1")
+	test.MakeDir(t, "testRoot/test1")
 
 	idx, err := BuildIndex(config, nil)
 
@@ -36,7 +38,7 @@ func TestBuildEmptyIndex(t *testing.T) {
 }
 
 func TestBuildIndexMissingRoot(t *testing.T) {
-	config, teardown := LoadTestConfig(t)
+	config, teardown := config.ForTest(t)
 	defer teardown()
 
 	idx, err := BuildIndex(config, nil)
@@ -51,18 +53,18 @@ func TestBuildIndexMissingRoot(t *testing.T) {
 }
 
 func TestBuildIndex(t *testing.T) {
-	c, teardown := LoadTestConfig(t)
+	c, teardown := config.ForTest(t)
 	defer teardown()
 
-	idx := BuildTestIndex(t, c)
+	idx := IndexForTest(t, c)
 
 	// change times so one file is updated
 	updated := time.Now().Add(time.Second * 5)
-	index.GetIndexFs().Chtimes("testRoot/test2/sub1"+"test2_2", updated, updated)
+	file.GetFs().Chtimes("testRoot/test2/sub1"+"test2_2", updated, updated)
 
 	// test fast path branch with existing index; changing a single file
 	log.SetLogThreshold(log.LevelTrace)
-	MakeFile(t, "testRoot/test2/sub1/"+"test2_sub1_2", "data2_1_2 updated", 0644)
+	test.MakeFile(t, "testRoot/test2/sub1/"+"test2_sub1_2", "data2_1_2 updated", 0644)
 	newIdx, err := BuildIndex(c, idx)
 
 	if err != nil {

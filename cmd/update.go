@@ -5,10 +5,13 @@ import (
 	"strings"
 
 	humanize "github.com/dustin/go-humanize"
-	"github.com/hpresnall/yabrc/index"
-	"github.com/hpresnall/yabrc/util"
 	"github.com/spf13/cobra"
 	log "github.com/spf13/jwalterweatherman"
+
+	"github.com/hpresnall/yabrc/config"
+	"github.com/hpresnall/yabrc/file"
+	"github.com/hpresnall/yabrc/index"
+	"github.com/hpresnall/yabrc/util"
 )
 
 var fast bool
@@ -31,18 +34,18 @@ var updateCmd = &cobra.Command{
 }
 
 func runUpdate(cmd *cobra.Command, args []string) error {
-	config, err := util.LoadConfig(args[0])
+	config, err := config.Load(args[0])
 
 	if err != nil {
 		return err
 	}
 
-	indexFile := util.GetIndexFile(config, ext)
+	indexFile := index.GetPath(config, ext)
 
 	log.INFO.Println()
 	log.INFO.Printf("loading existing Index '%s'\n", indexFile)
 
-	existingIdx, err := util.LoadIndex(config, ext)
+	existingIdx, err := index.Load(config, ext)
 
 	if err != nil {
 		existingIdx = nil
@@ -87,7 +90,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 		if oldExt == "" {
 			oldExt = "_" + existingIdx.Timestamp().Format("20060102_150405")
 		}
-		movedFile := util.GetIndexFile(config, oldExt)
+		movedFile := index.GetPath(config, oldExt)
 
 		if autosave {
 			log.INFO.Printf("moving '%s' to '%s'\n", indexFile, movedFile)
@@ -97,7 +100,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		err = index.GetIndexFs().Rename(indexFile, movedFile)
+		err = file.GetFs().Rename(indexFile, movedFile)
 
 		if err != nil {
 			return fmt.Errorf("cannot move existing Index to '%s': %v", movedFile, err)

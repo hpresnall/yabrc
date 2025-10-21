@@ -1,4 +1,4 @@
-package index
+package config
 
 import (
 	"errors"
@@ -20,13 +20,28 @@ type Config struct {
 	ignoredDirs []*regexp.Regexp // list of directories to ignore when building the Index
 }
 
-// NewConfig creates a Config from the given file.
-func NewConfig(configFile string) (Config, error) {
+// Load loads the Config defined by the given file.
+func Load(configFile string) (Config, error) {
+	log.INFO.Printf("loading Config from '%s'\n", configFile)
+
+	config, err := new(configFile)
+
+	if err != nil {
+		return config, fmt.Errorf("cannot read config file '%s': %v", configFile, err)
+	}
+
+	log.INFO.Printf("'%s'=%s\n", configFile, config)
+
+	return config, nil
+}
+
+// new creates a Config from the given file.
+func new(configFile string) (Config, error) {
 	var config Config
 
 	v := viper.New()
 	v.SetConfigFile(configFile)
-	ConfigViperHook(v)
+	viperHook(v)
 
 	if err := v.ReadInConfig(); err != nil {
 		return config, err
@@ -126,10 +141,11 @@ func (c Config) String() string {
 	return fmt.Sprintf("{root: '%s', baseName: '%s', savePath: '%s', ignoredDirs: [ %s ]}", c.root, c.baseName, c.savePath, strings.Join(ignoredStrings, ", "))
 }
 
-// ConfigViperHook is a hook function meant for testing.
+// ViperHook is a hook function meant for testing.
 // This is called after the Viper instance is created but before the Config is loaded from the file system.
-var ConfigViperHook func(v *viper.Viper)
+var viperHook func(v *viper.Viper)
+var defaultViperHook = func(v *viper.Viper) {}
 
 func init() {
-	ConfigViperHook = func(v *viper.Viper) {}
+	viperHook = defaultViperHook
 }

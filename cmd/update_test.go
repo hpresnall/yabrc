@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hpresnall/yabrc/file"
 	"github.com/hpresnall/yabrc/index"
-	"github.com/hpresnall/yabrc/util"
+	"github.com/hpresnall/yabrc/test"
 )
 
 var idxTime time.Time
@@ -18,11 +19,11 @@ func setupUpdate(t *testing.T) func() {
 
 	// set file time earlier for test validation
 	idxTime = idx.Timestamp().Add(time.Second * -3600)
-	index.GetIndexFs().Chtimes(util.GetIndexFile(config, "_current"), idxTime, idxTime)
+	file.GetFs().Chtimes(index.GetPath(cfg, "_current"), idxTime, idxTime)
 
 	// update index with a new file
-	path := config.Root() + "/another"
-	f := util.MakeFile(t, path, "another", 0644)
+	path := cfg.Root() + "/another"
+	f := test.MakeFile(t, path, "another", 0644)
 	idx.Add(path, f)
 
 	return teardown
@@ -119,7 +120,7 @@ func TestUpdateMoveNoSave(t *testing.T) {
 	reader = bufio.NewReader(strings.NewReader("y\nn\n"))
 
 	runAndValidate(t)
-	_, err := index.GetIndexFs().Stat(util.GetIndexFile(config, ext))
+	_, err := file.GetFs().Stat(index.GetPath(cfg, ext))
 
 	if err == nil {
 		t.Fatal("current should not exist")
@@ -137,7 +138,7 @@ func TestUpdateSame(t *testing.T) {
 
 	runAndValidate(t)
 	// current exists but has not been updated
-	_, err := index.GetIndexFs().Stat(util.GetIndexFile(config, ext))
+	_, err := file.GetFs().Stat(index.GetPath(cfg, ext))
 
 	if err != nil {
 		t.Fatal("current should exist")
@@ -157,7 +158,7 @@ func TestUpdateNew(t *testing.T) {
 
 	fast = true // increase coverage; should be ignored
 
-	index.GetIndexFs().Remove(util.GetIndexFile(config, ext))
+	file.GetFs().Remove(index.GetPath(cfg, ext))
 
 	runAndValidate(t)
 	currentUpdated(t)
@@ -177,7 +178,7 @@ func TestUpdateNewOverwrite(t *testing.T) {
 
 	overwrite = true
 
-	index.GetIndexFs().Remove(util.GetIndexFile(config, ext))
+	file.GetFs().Remove(index.GetPath(cfg, ext))
 
 	runAndValidate(t)
 	currentUpdated(t)
@@ -200,12 +201,12 @@ func TestUpdateBadIndex(t *testing.T) {
 	defer setupUpdate(t)()
 
 	// delete index => update will just create a new one ...
-	if err := index.GetIndexFs().Remove(util.GetIndexFile(config, ext)); err != nil {
+	if err := file.GetFs().Remove(index.GetPath(cfg, ext)); err != nil {
 		t.Fatalf("cannot remove index from file system")
 	}
 
 	// so, also delete config root so no updated index is built
-	if err := index.GetIndexFs().RemoveAll(config.Root()); err != nil {
+	if err := file.GetFs().RemoveAll(cfg.Root()); err != nil {
 		t.Fatalf("cannot remove index from file system")
 	}
 
@@ -221,7 +222,7 @@ func runAndValidate(t *testing.T) {
 }
 
 func currentExists(t *testing.T) {
-	info, err := index.GetIndexFs().Stat(util.GetIndexFile(config, ext))
+	info, err := file.GetFs().Stat(index.GetPath(cfg, ext))
 
 	if err != nil {
 		t.Fatal("current should exist")
@@ -233,7 +234,7 @@ func currentExists(t *testing.T) {
 }
 
 func currentUpdated(t *testing.T) {
-	info, err := index.GetIndexFs().Stat(util.GetIndexFile(config, ext))
+	info, err := file.GetFs().Stat(index.GetPath(cfg, ext))
 
 	if err != nil {
 		t.Fatal("current should exist")
@@ -248,7 +249,7 @@ func currentUpdated(t *testing.T) {
 
 func oldExists(t *testing.T) {
 	//  assumes oldExt is set by runUpdate and not reset afterwards
-	_, err := index.GetIndexFs().Stat(util.GetIndexFile(config, oldExt))
+	_, err := file.GetFs().Stat(index.GetPath(cfg, oldExt))
 
 	if err != nil {
 		t.Fatal("old should exist")
@@ -259,7 +260,7 @@ func oldExists(t *testing.T) {
 
 func oldDoesNotExist(t *testing.T) {
 	//  assumes oldExt is set by runUpdate and not reset afterwards
-	_, err := index.GetIndexFs().Stat(util.GetIndexFile(config, oldExt))
+	_, err := file.GetFs().Stat(index.GetPath(cfg, oldExt))
 
 	if err == nil {
 		t.Fatal("old should not exist")
