@@ -93,7 +93,8 @@ func load(idx *Index, path string) error {
 		}
 
 		if !readHeader {
-			if fields[0] != idx.Config().Root() {
+			// support old indexes that wrote rootWithSlash to header
+			if (fields[0] != idx.Config().Root()) && (fields[0] != idx.rootWithSlash) {
 				return fmt.Errorf("%d: header '%s' must define a root path that matches Config.Root '%s'", n, r.Text(), idx.Config().Root())
 			}
 
