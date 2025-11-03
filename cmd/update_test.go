@@ -2,35 +2,31 @@ package cmd
 
 import (
 	"bufio"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/hpresnall/yabrc/file"
-	"github.com/hpresnall/yabrc/index"
 	"github.com/hpresnall/yabrc/test"
 )
 
 var idxTime time.Time
 
-func setupUpdate(t *testing.T) func() {
-	teardown := setup(t)
+func setupUpdate(t *testing.T) {
+	setup(t)
 
 	// set file time earlier for test validation
 	idxTime = idx.Timestamp().Add(time.Second * -3600)
-	file.GetFs().Chtimes(index.GetPath(cfg, "_current"), idxTime, idxTime)
+	file.GetFs().Chtimes(idx.GetFile(ext), idxTime, idxTime)
 
 	// update index with a new file
 	path := cfg.Root() + "/another"
 	f := test.MakeFile(t, path, "another", 0644)
 	idx.Add(path, f)
-
-	return teardown
 }
 
 func TestUpdate(t *testing.T) {
-	defer setupUpdate(t)()
+	setupUpdate(t)
 
 	// move and save
 	reader = bufio.NewReader(strings.NewReader("y\ny\n"))
@@ -46,7 +42,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpdateOverwrite(t *testing.T) {
-	defer setupUpdate(t)()
+	setupUpdate(t)
 
 	// save only
 	reader = bufio.NewReader(strings.NewReader("y\n"))
@@ -62,7 +58,7 @@ func TestUpdateOverwrite(t *testing.T) {
 }
 
 func TestUpdateOverwriteAutosave(t *testing.T) {
-	defer setupUpdate(t)()
+	setupUpdate(t)
 
 	overwrite = true
 	autosave = true
@@ -73,7 +69,7 @@ func TestUpdateOverwriteAutosave(t *testing.T) {
 }
 
 func TestUpdateFast(t *testing.T) {
-	defer setupUpdate(t)()
+	setupUpdate(t)
 
 	fast = true
 
@@ -87,7 +83,7 @@ func TestUpdateFast(t *testing.T) {
 }
 
 func TestUpdateNoInput(t *testing.T) {
-	defer setupUpdate(t)()
+	setupUpdate(t)
 
 	// EOF on confirm; should quit and not save
 	reader = bufio.NewReader(strings.NewReader(""))
@@ -100,7 +96,7 @@ func TestUpdateNoInput(t *testing.T) {
 }
 
 func TestUpdateNoMove(t *testing.T) {
-	defer setupUpdate(t)()
+	setupUpdate(t)
 
 	// no move, should quit and not save
 	reader = bufio.NewReader(strings.NewReader("n\ny\n"))
@@ -114,13 +110,13 @@ func TestUpdateNoMove(t *testing.T) {
 }
 
 func TestUpdateMoveNoSave(t *testing.T) {
-	defer setupUpdate(t)()
+	setupUpdate(t)
 
 	// move, should quit and not save
 	reader = bufio.NewReader(strings.NewReader("y\nn\n"))
 
 	runAndValidate(t)
-	_, err := file.GetFs().Stat(index.GetPath(cfg, ext))
+	_, err := file.GetFs().Stat(idx.GetFile(ext))
 
 	if err == nil {
 		t.Fatal("current should not exist")
@@ -131,14 +127,14 @@ func TestUpdateMoveNoSave(t *testing.T) {
 }
 
 func TestUpdateSame(t *testing.T) {
-	defer setup(t)() // do not add file
+	setup(t) // do not add file
 
 	// should short circuit and not read any input
 	reader = bufio.NewReader(strings.NewReader("y\ny\n"))
 
 	runAndValidate(t)
 	// current exists but has not been updated
-	_, err := file.GetFs().Stat(index.GetPath(cfg, ext))
+	_, err := file.GetFs().Stat(idx.GetFile(ext))
 
 	if err != nil {
 		t.Fatal("current should exist")
@@ -151,14 +147,14 @@ func TestUpdateSame(t *testing.T) {
 }
 
 func TestUpdateNew(t *testing.T) {
-	defer setupUpdate(t)()
+	setupUpdate(t)
 
 	// should only need to confirm for new file and not moving existing
 	reader = bufio.NewReader(strings.NewReader("y\ny\n"))
 
 	fast = true // increase coverage; should be ignored
 
-	file.GetFs().Remove(index.GetPath(cfg, ext))
+	file.GetFs().Remove(idx.GetFile(ext))
 
 	runAndValidate(t)
 	currentUpdated(t)
@@ -171,14 +167,14 @@ func TestUpdateNew(t *testing.T) {
 
 // same code path as TestUpdateNew; overwrite should have no effect
 func TestUpdateNewOverwrite(t *testing.T) {
-	defer setupUpdate(t)()
+	setupUpdate(t)
 
 	// should only need to confirm for new file and not moving existing
 	reader = bufio.NewReader(strings.NewReader("y\ny\n"))
 
 	overwrite = true
 
-	file.GetFs().Remove(index.GetPath(cfg, ext))
+	file.GetFs().Remove(idx.GetFile(ext))
 
 	runAndValidate(t)
 	currentUpdated(t)
@@ -190,7 +186,7 @@ func TestUpdateNewOverwrite(t *testing.T) {
 }
 
 func TestUpdateBadConfig(t *testing.T) {
-	defer setupUpdate(t)()
+	setupUpdate(t)
 
 	if err := runUpdate(nil, []string{"invalid"}); err == nil {
 		t.Error("should error on invalid config", err)
@@ -198,10 +194,10 @@ func TestUpdateBadConfig(t *testing.T) {
 }
 
 func TestUpdateBadIndex(t *testing.T) {
-	defer setupUpdate(t)()
+	setupUpdate(t)
 
 	// delete index => update will just create a new one ...
-	if err := file.GetFs().Remove(index.GetPath(cfg, ext)); err != nil {
+	if err := file.GetFs().Remove(idx.GetFile(ext)); err != nil {
 		t.Fatalf("cannot remove index from file system")
 	}
 
@@ -222,7 +218,7 @@ func runAndValidate(t *testing.T) {
 }
 
 func currentExists(t *testing.T) {
-	info, err := file.GetFs().Stat(index.GetPath(cfg, ext))
+	info, err := file.GetFs().Stat(idx.GetFile(ext))
 
 	if err != nil {
 		t.Fatal("current should exist")
@@ -234,22 +230,22 @@ func currentExists(t *testing.T) {
 }
 
 func currentUpdated(t *testing.T) {
-	info, err := file.GetFs().Stat(index.GetPath(cfg, ext))
+	indexFile := idx.GetFile(ext)
+
+	info, err := file.GetFs().Stat(indexFile)
 
 	if err != nil {
-		t.Fatal("current should exist")
+		t.Fatal("current should exist", err)
 	}
 
 	if info.ModTime().Equal(idxTime) {
-		fmt.Println(info.ModTime(), idxTime)
-
 		t.Fatal("current should be updated")
 	}
 }
 
 func oldExists(t *testing.T) {
 	//  assumes oldExt is set by runUpdate and not reset afterwards
-	_, err := file.GetFs().Stat(index.GetPath(cfg, oldExt))
+	_, err := file.GetFs().Stat(idx.GetFile(oldExt))
 
 	if err != nil {
 		t.Fatal("old should exist")
@@ -260,7 +256,7 @@ func oldExists(t *testing.T) {
 
 func oldDoesNotExist(t *testing.T) {
 	//  assumes oldExt is set by runUpdate and not reset afterwards
-	_, err := file.GetFs().Stat(index.GetPath(cfg, oldExt))
+	_, err := file.GetFs().Stat(idx.GetFile(oldExt))
 
 	if err == nil {
 		t.Fatal("old should not exist")

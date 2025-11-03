@@ -6,6 +6,8 @@ import (
 	"github.com/spf13/cobra"
 	log "github.com/spf13/jwalterweatherman"
 
+	"github.com/hpresnall/yabrc/config"
+	"github.com/hpresnall/yabrc/index"
 	"github.com/hpresnall/yabrc/util"
 )
 
@@ -26,7 +28,13 @@ var compareCmd = &cobra.Command{
 }
 
 func runCompare(cmd *cobra.Command, args []string) error {
-	newIdx, err := loadIndex(args[0], ext)
+	cfg, err := config.Load(args[0])
+
+	if err != nil {
+		return err
+	}
+
+	newIdx, err := index.Load(&cfg, ext)
 
 	if err != nil {
 		return err
@@ -34,16 +42,20 @@ func runCompare(cmd *cobra.Command, args []string) error {
 
 	log.INFO.Println()
 
-	var oldIdxConfig string
+	var otherCfg config.Config
 
 	// one arg => use the same config
 	if len(args) > 1 {
-		oldIdxConfig = args[1]
+		otherCfg, err = config.Load(args[1])
+
+		if err != nil {
+			return err
+		}
 	} else {
-		oldIdxConfig = args[0]
+		otherCfg = cfg
 	}
 
-	oldIdx, err := loadIndex(oldIdxConfig, ext2)
+	oldIdx, err := index.Load(&otherCfg, ext2)
 
 	if err != nil {
 		return err

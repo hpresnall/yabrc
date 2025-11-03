@@ -16,38 +16,44 @@ import (
 var TestFile = "config.yaml"
 
 // ForTest sets up a fake config file for use in tests.
-// It links the index file system into Viper, saves 'config.yaml'
+// It links the test file system into Viper, saves 'config.yaml'
 // from the given string and then loads that file into a Config.
-// The function returned is for test teardown and should be called via defer.
-func ForTest(t *testing.T) (Config, func()) {
-	teardown := setupViperForTest()
-
+func ForTest(t *testing.T) Config {
 	configString := `root: testRoot
 baseName: testBaseName
 savePath: testSavePath
 ignoredDirs: .*ignored.*`
+
+	c, _ := FromString(t, configString)
+
+	return c
+}
+
+// calls setupTestFs()
+// links the index file system into Viper
+// creates 'config.yaml' from the given string and loads it
+func FromString(t *testing.T, configString string) (Config, error) {
+	setupViperForTest(t)
+
 	test.MakeFile(t, TestFile, configString, 0644)
-	// if MakeFile fails, index fs probably will not be cleaned up
 
 	c, err := Load(TestFile)
 
 	if err != nil {
-		teardown()
-		t.Fatal("should be able to load config", err)
+		return Config{}, err
 	}
 
-	return c, teardown
+	return c, err
 }
 
-func setupViperForTest() func() {
-	fsTeardown := test.SetupTestFs()
+func setupViperForTest(t *testing.T) {
+	test.SetupTestFs(t)
 
 	viperHook = func(v *viper.Viper) {
 		v.SetFs(file.GetFs())
 	}
 
-	return func() {
-		fsTeardown()
+	t.Cleanup(func() {
 		viperHook = defaultViperHook
-	}
+	})
 }

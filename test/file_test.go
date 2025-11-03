@@ -4,10 +4,11 @@ import (
 	"testing"
 )
 
-func TestFile(t *testing.T) {
-	teardown := SetupTestFs()
-	defer teardown()
+func Test(t *testing.T) {
+	SetupTestFs(t)
 
 	MakeDir(t, "dir")
 	MakeFile(t, "dir/test", "foo", 0644)
+
+	RemoveDir(t, "dir")
 }

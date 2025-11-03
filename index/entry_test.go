@@ -12,10 +12,9 @@ import (
 )
 
 func TestEntryFromFile(t *testing.T) {
-	_, info, teardown := setupEntryFs(t)
-	defer teardown()
+	_, info := setupEntryFs(t)
 
-	e, err := buildEntry("test", info)
+	e, err := buildEntry("./test", info)
 
 	if err != nil {
 		t.Fatal("cannot build entry", err)
@@ -42,8 +41,7 @@ func TestEntryFromFile(t *testing.T) {
 }
 
 func TestEntryFromMissingFile(t *testing.T) {
-	testFs, info, teardown := setupEntryFs(t)
-	defer teardown()
+	testFs, info := setupEntryFs(t)
 
 	// missing file but valid info
 	testFs.Remove("test")
@@ -56,8 +54,7 @@ func TestEntryFromMissingFile(t *testing.T) {
 }
 
 func TestEntryFromEmptyPath(t *testing.T) {
-	_, info, teardown := setupEntryFs(t)
-	defer teardown()
+	_, info := setupEntryFs(t)
 
 	// path does not match info
 	_, err := buildEntry("", info)
@@ -68,8 +65,7 @@ func TestEntryFromEmptyPath(t *testing.T) {
 }
 
 func TestEntryFromWrongPath(t *testing.T) {
-	_, info, teardown := setupEntryFs(t)
-	defer teardown()
+	_, info := setupEntryFs(t)
 
 	// path does not match info
 	_, err := buildEntry("another", info)
@@ -125,23 +121,21 @@ func TestValidEntry(t *testing.T) {
 	}
 }
 
-func setupEntryFs(t *testing.T) (afero.Fs, os.FileInfo, func()) {
-	teardown := test.SetupTestFs()
+func setupEntryFs(t *testing.T) (afero.Fs, os.FileInfo) {
+	test.SetupTestFs(t)
 	testFs := file.GetFs()
 
 	err := afero.WriteFile(testFs, "test", []byte("test"), 0644)
 
 	if err != nil {
-		teardown()
 		t.Fatal("cannot make file", "test", err)
 	}
 
 	info, err := testFs.Stat("test")
 
 	if err != nil {
-		teardown()
 		t.Fatal("cannot load FileInfo", err)
 	}
 
-	return testFs, info, teardown
+	return testFs, info
 }

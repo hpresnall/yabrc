@@ -1,8 +1,8 @@
+// Package file provides a wrapper around the file system to allow for testing.
 package file
 
 import "github.com/spf13/afero"
 
-// use a file system wrapper to allow for testing
 var fileSystem afero.Fs
 
 func init() {
@@ -15,12 +15,15 @@ func GetFs() afero.Fs {
 	return fileSystem
 }
 
-// SetFs sets the current filesystem used by the Index. Meant for testing.
+// SetFs sets the current filesystem used by the Index. Meant for testing. Returns the previous filesystem.
 // The behavior is undefined if this function is called between building an Index and adding Entries to it.
-func SetFs(fs afero.Fs) {
+func SetFs(fs afero.Fs) afero.Fs {
 	if fs == nil {
 		panic("cannot use nil fs")
 	}
 
+	oldFs := fileSystem
 	fileSystem = fs
+
+	return oldFs
 }

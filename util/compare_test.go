@@ -6,6 +6,7 @@ import (
 	"github.com/hpresnall/yabrc/config"
 	"github.com/hpresnall/yabrc/index"
 	"github.com/hpresnall/yabrc/test"
+	log "github.com/spf13/jwalterweatherman"
 )
 
 func TestCompareEmpty(t *testing.T) {
@@ -25,8 +26,20 @@ func TestCompareNil(t *testing.T) {
 }
 
 func TestCompareDifferentRoots(t *testing.T) {
-	idx1, _ := index.New("root1")
-	idx2, _ := index.New("root2")
+	config1, err := config.FromString(t, "root: testRoot1\nbaseName: testBaseName")
+
+	if err != nil {
+		t.Fatal("should be able to load config")
+	}
+
+	config2, err := config.FromString(t, "root: testRoot2\nbaseName: testBaseName")
+
+	if err != nil {
+		t.Fatal("should be able to load config")
+	}
+
+	idx1, _ := index.New(&config1)
+	idx2, _ := index.New(&config2)
 
 	if !Compare(idx1, idx2, false) {
 		t.Error("indexes with different roots should be equal")
@@ -34,10 +47,7 @@ func TestCompareDifferentRoots(t *testing.T) {
 }
 
 func TestCompareSame(t *testing.T) {
-	config, teardown := config.ForTest(t)
-	defer teardown()
-
-	idx := IndexForTest(t, config)
+	idx := IndexForTest(t)
 
 	if !Compare(idx, idx, false) {
 		t.Error("index should equal itself")
@@ -45,11 +55,8 @@ func TestCompareSame(t *testing.T) {
 }
 
 func TestCompareEqual(t *testing.T) {
-	config, teardown := config.ForTest(t)
-	defer teardown()
-
-	idx1 := IndexForTest(t, config)
-	idx2 := IndexForTest(t, config)
+	idx1 := IndexForTest(t)
+	idx2 := IndexForTest(t)
 
 	if !Compare(idx1, idx2, false) {
 		t.Error("indexes should be equal")
@@ -57,33 +64,35 @@ func TestCompareEqual(t *testing.T) {
 }
 
 func TestCompare(t *testing.T) {
-	config, teardown := config.ForTest(t)
-	defer teardown()
+	// increase code coverage
+	log.SetLogThreshold(log.LevelTrace)
 
-	idx1 := IndexForTest(t, config)
-	idx2 := IndexForTest(t, config)
+	idx1 := IndexForTest(t)
+	root := idx1.Config().Root()
 
 	// file paths must match BuildTestIndex()
-	info1 := test.MakeFile(t, "testRoot/"+"test1/"+"test1_1", "1", 0644)               // smaller
-	info2 := test.MakeFile(t, "testRoot/"+"test2/"+"test2_1", "data2_1 updated", 0644) // larger
-	info2_1 := test.MakeFile(t, "testRoot/test2/sub1"+"test2_2", "data2_x", 0644)      // different hash
-	info4 := test.MakeFile(t, "testRoot/"+"test4/"+"test4_1", "data4_1", 0644)         // missing
-	info5 := test.MakeFile(t, "testRoot/"+"test5/"+"test5_1", "data5_1", 0644)         // new
+	// changes in updated index
+	test.MakeFile(t, root+"/test1/"+"test1_1", "1", 0644)                   // smaller
+	test.MakeFile(t, root+"/test2/"+"test2_1", "data2_1 updated", 0644)     // larger
+	test.MakeFile(t, root+"/test2/sub1/"+"test2_sub1_2", "data2_1_x", 0644) // different hash
 
-	idx1.Add("testRoot/"+"test1/"+"test1_1", info1)
-	idx1.Add("testRoot/"+"test2/"+"test2_1", info2)
-	idx1.Add("testRoot/"+"test2/sub1"+"test2_2", info2_1)
-	idx1.Add("testRoot/"+"test4/"+"test4_1", info4)
+	// missing in updated index
+	test.RemoveDir(t, root+"/test3")
 
-	idx2.Add("testRoot/"+"test5/"+"test5_1", info5)
-	//idx2.Add("testRoot/"+"test5/"+"test5_1", info6)
+	// new file
+	test.MakeFile(t, root+"/"+"test4/"+"test4_1", "data4_1", 0644)
+
+	idx2, err := BuildIndex(idx1.Config(), idx1)
+
+	if err != nil {
+		t.Fatal("should be able to reload index")
+	}
 
 	// track changes; ensure everything is removed
 	comparisons := make(map[string]struct{})
 	comparisons["test1/"+"test1_1"] = struct{}{}
 	comparisons["test2/"+"test2_1"] = struct{}{}
 	comparisons["test4/"+"test4_1"] = struct{}{}
-	comparisons["test5/"+"test5_1"] = struct{}{}
 
 	oldMissing := OnMissing
 	oldHash := OnHashChange
@@ -112,7 +121,7 @@ func TestCompare(t *testing.T) {
 	}
 
 	// run again with ignoreMissing; Compare should ignore test5 since it is only in idx2
-	comparisons["test5/"+"test5_1"] = struct{}{}
+	comparisons["test4/"+"test4_1"] = struct{}{}
 
 	if Compare(idx1, idx2, true) {
 		t.Error("indexes should not be equal when ignoreMissing is true")

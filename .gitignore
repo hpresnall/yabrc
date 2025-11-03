@@ -2,6 +2,7 @@
 vendor
 out
 __debug_bin*
+yabrc
 
 # IDE config
 .project

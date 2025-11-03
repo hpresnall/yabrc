@@ -13,24 +13,31 @@ import (
 )
 
 // SetupTestFs creates a filesystem for testing.
-// The returned function must be called / deferred in tests.
-func SetupTestFs() func() {
+func SetupTestFs(t *testing.T) {
 	oldFs := file.GetFs()
 
 	testFs := afero.NewMemMapFs()
 	file.SetFs(testFs)
 
-	return func() {
+	t.Cleanup(func() {
 		file.SetFs(oldFs)
-	}
+	})
 }
 
 // MakeDir creates the given directory
 func MakeDir(t *testing.T, dir string) {
-	err := file.GetFs().MkdirAll("testRoot", 0755)
+	err := file.GetFs().MkdirAll(dir, 0755)
 
 	if err != nil {
-		t.Fatal("cannot make directory", dir, err)
+		t.Fatalf("cannot make directory '%s': %v", dir, err)
+	}
+}
+
+func RemoveDir(t *testing.T, dir string) {
+	err := file.GetFs().RemoveAll(dir)
+
+	if err != nil {
+		t.Fatalf("cannot remove directory '%s': %v", dir, err)
 	}
 }
 
@@ -39,13 +46,13 @@ func MakeFile(t *testing.T, path string, data string, perm os.FileMode) os.FileI
 	err := afero.WriteFile(file.GetFs(), path, []byte(data), perm)
 
 	if err != nil {
-		t.Fatal("cannot make file", path, err)
+		t.Fatalf("cannot make file '%s': %v", path, err)
 	}
 
 	info, err := file.GetFs().Stat(path)
 
 	if err != nil {
-		t.Fatal("cannot stat file", path, err)
+		t.Fatalf("cannot stat file '%s': %v", path, err)
 	}
 
 	return info

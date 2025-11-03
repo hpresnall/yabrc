@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	gopath "path"
+	"path/filepath"
 	"time"
 
 	humanize "github.com/dustin/go-humanize"
@@ -40,6 +41,7 @@ func buildEntry(path string, info os.FileInfo) (Entry, error) {
 	}
 
 	base := gopath.Base(path)
+
 	if base != norm.NFC.String(info.Name()) {
 		return e, fmt.Errorf("path '%s' does not match FileInfo.Name() '%s'", path, info.Name())
 	}
@@ -63,7 +65,7 @@ func buildEntry(path string, info os.FileInfo) (Entry, error) {
 	sha := sha256er.Sum(nil)
 	base64 := base64.RawStdEncoding.EncodeToString(sha)
 
-	e.path = path // note using normalized path, not info.Name()
+	e.path = filepath.Clean(path) // note using normalized path, not info.Name()
 	e.lastMod = info.ModTime()
 	e.size = info.Size()
 	e.hash = base64

@@ -40,12 +40,12 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	indexFile := index.GetPath(config, ext)
+	indexFile := index.GetIndexFile(&config, ext)
 
 	log.INFO.Println()
 	log.INFO.Printf("loading existing Index '%s'\n", indexFile)
 
-	existingIdx, err := index.Load(config, ext)
+	existingIdx, err := index.Load(&config, ext)
 
 	if err != nil {
 		existingIdx = nil
@@ -63,9 +63,9 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	var newIdx *index.Index
 
 	if fast {
-		newIdx, err = util.BuildIndex(config, existingIdx)
+		newIdx, err = util.BuildIndex(&config, existingIdx)
 	} else {
-		newIdx, err = util.BuildIndex(config, nil)
+		newIdx, err = util.BuildIndex(&config, nil)
 	}
 
 	if err != nil {
@@ -74,7 +74,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 
 	if existingIdx != nil {
 		log.INFO.Println()
-		log.INFO.Printf("comparing '%s' %s vs %s\n", newIdx.Root(), humanize.Time(newIdx.Timestamp()), humanize.Time(existingIdx.Timestamp()))
+		log.INFO.Printf("comparing '%s' %s vs %s\n", newIdx.Config().Root(), humanize.Time(newIdx.Timestamp()), humanize.Time(existingIdx.Timestamp()))
 		same := util.Compare(newIdx, existingIdx, false)
 
 		if same {
@@ -90,7 +90,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 		if oldExt == "" {
 			oldExt = "_" + existingIdx.Timestamp().Format("20060102_150405")
 		}
-		movedFile := index.GetPath(config, oldExt)
+		movedFile := existingIdx.GetFile(oldExt)
 
 		if autosave {
 			log.INFO.Printf("moving '%s' to '%s'\n", indexFile, movedFile)
@@ -128,7 +128,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	err = newIdx.Store(indexFile)
+	err = newIdx.Store(ext)
 
 	if err != nil {
 		return fmt.Errorf("cannot save Index to '%s': %v", indexFile, err)

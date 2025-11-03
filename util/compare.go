@@ -73,7 +73,7 @@ func init() {
 
 	// default functions for Compare
 	OnMissing = func(missing index.Entry, other *index.Index) {
-		log.INFO.Printf("! '%s': '%s' %s\n", missing.Path(), other.Root(), outputTime(now, other.Timestamp()))
+		log.INFO.Printf("! '%s': '%s' %s\n", missing.Path(), other.Config().Root(), outputTime(now, other.Timestamp()))
 	}
 
 	OnHashChange = func(e1 index.Entry, e2 index.Entry) {

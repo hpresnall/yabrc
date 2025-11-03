@@ -3,8 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/hpresnall/yabrc/cmd"
 	log "github.com/spf13/jwalterweatherman"
+
+	"github.com/hpresnall/yabrc/cmd"
 )
 
 // only used for testing

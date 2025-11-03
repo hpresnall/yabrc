@@ -8,9 +8,6 @@ import (
 
 	"github.com/spf13/cobra"
 	log "github.com/spf13/jwalterweatherman"
-
-	"github.com/hpresnall/yabrc/config"
-	"github.com/hpresnall/yabrc/index"
 )
 
 var version = "test"
@@ -57,21 +54,4 @@ var rootCmd = &cobra.Command{
 // Execute runs the command line application.
 func Execute() error {
 	return rootCmd.Execute()
-}
-
-// helper function to load a Config and Index
-func loadIndex(configFile string, ext string) (*index.Index, error) {
-	config, err := config.Load(configFile)
-
-	if err != nil {
-		return nil, err
-	}
-
-	idx, err := index.Load(config, ext)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return idx, nil
 }

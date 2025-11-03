@@ -7,11 +7,10 @@ import (
 
 	"github.com/hpresnall/yabrc/config"
 	"github.com/hpresnall/yabrc/file"
-	"github.com/hpresnall/yabrc/index"
 )
 
 func TestPrint(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
 	counter := &log.Counter{}
 	log.SetLogListeners(log.LogCounter(counter, log.LevelDebug))
@@ -38,7 +37,7 @@ func TestPrint(t *testing.T) {
 }
 
 func TestPrintJson(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
 	// pass config twice to cover printing more than one index
 	args = []string{config.TestFile, config.TestFile}
@@ -51,7 +50,7 @@ func TestPrintJson(t *testing.T) {
 }
 
 func TestPrintEntries(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
 	entries = true
 	json = false
@@ -71,9 +70,9 @@ func TestPrintBoth(t *testing.T) {
 }
 
 func TestPrintBadIndex(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
-	if err := file.GetFs().Remove(index.GetPath(cfg, ext)); err != nil {
+	if err := file.GetFs().Remove(idx.GetFile(ext)); err != nil {
 		t.Fatalf("cannot remove index from file system")
 	}
 

@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	"github.com/hpresnall/yabrc/config"
-	"github.com/hpresnall/yabrc/index"
 	"github.com/hpresnall/yabrc/test"
 )
 
 func TestCompareSelf(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
 	if err := runCompare(nil, args); err != nil {
 		t.Error("should not error on compare", err)
@@ -17,9 +16,9 @@ func TestCompareSelf(t *testing.T) {
 }
 
 func TestCompareSame(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
-	index.Store(idx, cfg, "_same")
+	idx.Store("_same")
 
 	ext2 = "_same"
 
@@ -29,16 +28,22 @@ func TestCompareSame(t *testing.T) {
 }
 
 func TestCompareDifferent(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
 	// update index with a new file
-	path := cfg.Root() + "/another"
-	f := test.MakeFile(t, path, "another", 0644)
+	// use zzz to ensure sorted paths in compare find missing files last
+	path := cfg.Root() + "/zzz"
+	f := test.MakeFile(t, path, "zzz", 0644)
+	idx.Add(path, f)
+
+	// update file so hash is different
+	path = cfg.Root() + "/test2/sub1/" + "test2_sub1_2"
+	f = test.MakeFile(t, path, "data2_1_x", 0644) // different hash
 	idx.Add(path, f)
 
 	ext2 = "_different"
 
-	index.Store(idx, cfg, ext2)
+	idx.Store(ext2)
 
 	err := runCompare(nil, args)
 
@@ -51,9 +56,9 @@ func TestCompareDifferent(t *testing.T) {
 }
 
 func TestCompareTwoConfigs(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
-	index.Store(idx, cfg, "_same")
+	idx.Store("_same")
 
 	ext2 = "_same"
 
@@ -63,7 +68,7 @@ func TestCompareTwoConfigs(t *testing.T) {
 }
 
 func TestCompareBadConfig(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
 	if err := runCompare(nil, []string{"invalid", config.TestFile}); err == nil {
 		t.Error("should error on invalid config", err)

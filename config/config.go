@@ -8,97 +8,15 @@ import (
 	"strings"
 
 	log "github.com/spf13/jwalterweatherman"
-	"github.com/spf13/viper"
 	"golang.org/x/text/unicode/norm"
 )
 
 // Config represents the information need to load and store an Index on the filesystem.
 type Config struct {
-	root        string           // Index root
+	root        string           // base path for the files that are indexed
+	savePath    string           // base path of the Index when saved to a file system
 	baseName    string           // default name of Index file, without extensions
-	savePath    string           // path of Index file
-	ignoredDirs []*regexp.Regexp // list of directories to ignore when building the Index
-}
-
-// Load loads the Config defined by the given file.
-func Load(configFile string) (Config, error) {
-	log.INFO.Printf("loading Config from '%s'\n", configFile)
-
-	config, err := new(configFile)
-
-	if err != nil {
-		return config, fmt.Errorf("cannot read config file '%s': %v", configFile, err)
-	}
-
-	log.INFO.Printf("'%s'=%s\n", configFile, config)
-
-	return config, nil
-}
-
-// new creates a Config from the given file.
-func new(configFile string) (Config, error) {
-	var config Config
-
-	v := viper.New()
-	v.SetConfigFile(configFile)
-	viperHook(v)
-
-	if err := v.ReadInConfig(); err != nil {
-		return config, err
-	}
-
-	root := v.GetString("root")
-
-	if root == "" {
-		return config, errors.New("'root' must be defined")
-	}
-
-	// change Windows \ to /
-	config.root = strings.Replace(root, "\\", "/", -1)
-
-	baseName := v.GetString("baseName")
-
-	if baseName == "" {
-		return config, errors.New("'baseName' must be defined")
-	}
-
-	config.baseName = baseName
-
-	savePath := v.GetString("savePath")
-
-	// default to the same directory as the config file
-	if savePath == "" {
-		// path.Dir assumes / for separator; Replace() first to ensure it works
-		savePath = path.Dir(strings.Replace(configFile, "\\", "/", -1))
-		log.DEBUG.Printf("set empty 'savePath' to '%s'", savePath)
-	} else {
-		savePath = strings.Replace(savePath, "\\", "/", -1)
-	}
-
-	config.savePath = savePath
-
-	possibleRegexs := v.GetStringSlice("ignoredDirs")
-	var ignoredDirs []*regexp.Regexp
-
-	for _, possibleRegex := range possibleRegexs {
-		possibleRegex = strings.TrimSpace(possibleRegex)
-
-		if possibleRegex == "" {
-			continue
-		}
-
-		re, err := regexp.Compile(norm.NFC.String(possibleRegex))
-
-		if err != nil {
-			return config, err
-		}
-
-		ignoredDirs = append(ignoredDirs, re)
-	}
-
-	config.ignoredDirs = ignoredDirs
-
-	return config, nil
+	ignoredDirs []*regexp.Regexp // list of directories to ignore when building the Index, relative to root
 }
 
 // Root returns the root directory to be used by the Index.
@@ -106,14 +24,14 @@ func (c Config) Root() string {
 	return c.root
 }
 
-// BaseName returns the base name that will be used when saving the Index.
-func (c Config) BaseName() string {
-	return c.baseName
-}
-
 // SavePath returns the directory where the Index will be saved.
 func (c Config) SavePath() string {
 	return c.savePath
+}
+
+// BaseName returns the base name that will be used when saving the Index.
+func (c Config) BaseName() string {
+	return c.baseName
 }
 
 // IgnoreDir returns true if the given directory matches any of the ignored directory regular expressions.
@@ -141,11 +59,53 @@ func (c Config) String() string {
 	return fmt.Sprintf("{root: '%s', baseName: '%s', savePath: '%s', ignoredDirs: [ %s ]}", c.root, c.baseName, c.savePath, strings.Join(ignoredStrings, ", "))
 }
 
-// ViperHook is a hook function meant for testing.
-// This is called after the Viper instance is created but before the Config is loaded from the file system.
-var viperHook func(v *viper.Viper)
-var defaultViperHook = func(v *viper.Viper) {}
+func new(root string, savePath string, baseName string, possibleRegexes []string) (Config, error) {
+	var c Config
 
-func init() {
-	viperHook = defaultViperHook
+	if root == "" {
+		return c, errors.New("'root' must be defined")
+	}
+
+	// change Windows \ to /
+	root = strings.Replace(root, "\\", "/", -1)
+
+	// note Clean assumes / separator
+	root = norm.NFC.String(path.Clean(root))
+
+	// add trailing / to root so Index Entries do not start with /
+	// if !strings.HasSuffix(root, "/") {
+	// 	root += "/"
+	// }
+
+	if baseName == "" {
+		return c, errors.New("'baseName' must be defined")
+	}
+
+	// change Windows \ to /
+	savePath = strings.Replace(savePath, "\\", "/", -1)
+
+	var ignoredDirs []*regexp.Regexp
+
+	for _, possibleRegex := range possibleRegexes {
+		possibleRegex = strings.TrimSpace(possibleRegex)
+
+		if possibleRegex == "" {
+			continue
+		}
+
+		re, err := regexp.Compile(norm.NFC.String(possibleRegex))
+
+		if err != nil {
+			return c, err
+		}
+
+		ignoredDirs = append(ignoredDirs, re)
+	}
+
+	c.root = root
+	c.savePath = savePath
+	c.baseName = baseName
+	c.ignoredDirs = ignoredDirs
+
+	return c, nil
 }

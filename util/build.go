@@ -19,14 +19,14 @@ import (
 // BuildIndex creates an Index by walking the file system from Config.Root().
 // If an existing Index is passed in, only new & updated files will be scanned. Other files will use
 // the existing Index's Entries.
-func BuildIndex(config config.Config, existingIdx *index.Index) (*index.Index, error) {
-	idx, err := index.New(config.Root())
+func BuildIndex(config *config.Config, existingIdx *index.Index) (*index.Index, error) {
+	idx, err := index.New(config)
 
 	if err != nil {
 		return idx, err
 	}
 
-	log.INFO.Printf("building index for '%s'\n", idx.Root())
+	log.INFO.Printf("building index for '%s'\n", idx.Config().Root())
 
 	start := time.Now()
 
@@ -40,7 +40,7 @@ func BuildIndex(config config.Config, existingIdx *index.Index) (*index.Index, e
 	errCount := 0
 	skippedBytes := int64(0)
 
-	err = afero.Walk(file.GetFs(), idx.Root(), func(path string, info os.FileInfo, err error) error {
+	err = afero.Walk(file.GetFs(), idx.Config().Root(), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			errCount++
 			log.WARN.Println("error reading file:", err.Error())
@@ -74,8 +74,8 @@ func BuildIndex(config config.Config, existingIdx *index.Index) (*index.Index, e
 		}
 
 		if existingIdx != nil {
-			relativePath := idx.GetRelativePath(strings.Replace(path, "\\", "/", -1))
-			entry, exists := existingIdx.Get(relativePath)
+			path := strings.Replace(path, "\\", "/", -1)
+			entry, exists := existingIdx.Get(path)
 
 			// Entry.LastMod() stored as Unix time
 			infoTime := info.ModTime().Truncate(time.Second)
@@ -85,14 +85,14 @@ func BuildIndex(config config.Config, existingIdx *index.Index) (*index.Index, e
 				(entry.Size() == info.Size()) &&
 				(infoTime.Before(entry.LastMod()) || infoTime.Equal(entry.LastMod())) {
 				if log.GetLogThreshold() == log.LevelTrace {
-					log.TRACE.Printf("skipping '%s': '%v' vs '%v' & '%d' vs '%d'", relativePath, info.ModTime(), entry.LastMod(), info.Size(), entry.Size())
+					log.TRACE.Printf("skipping '%s': '%v' vs '%v' & '%d' vs '%d'", path, info.ModTime(), entry.LastMod(), info.Size(), entry.Size())
 				}
 				existingCount++
 				skippedBytes += info.Size()
 				err = idx.AddEntry(entry)
 			} else {
 				if log.GetLogThreshold() <= log.LevelDebug {
-					log.DEBUG.Printf("rescanning '%s': '%v' vs '%v' & '%d' vs '%d'", relativePath, info.ModTime(), entry.LastMod(), info.Size(), entry.Size())
+					log.DEBUG.Printf("rescanning '%s': '%v' vs '%v' & '%d' vs '%d'", path, info.ModTime(), entry.LastMod(), info.Size(), entry.Size())
 				}
 				hashedCount++
 				hashedBytes += info.Size()
@@ -117,7 +117,7 @@ func BuildIndex(config config.Config, existingIdx *index.Index) (*index.Index, e
 
 	// index is truly empty, not just empty because all the files could not be read
 	if (idx.Size() == 0) && (errCount > 0) {
-		err = errors.New("no files successfully read from '" + idx.Root() + "'")
+		err = errors.New("no files successfully read from '" + idx.Config().Root() + "'")
 	}
 
 	d := time.Since(start)

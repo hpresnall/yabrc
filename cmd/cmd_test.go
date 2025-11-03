@@ -16,25 +16,25 @@ var args []string
 var cfg config.Config
 var idx *index.Index
 
-func setup(t *testing.T) func() {
+func setup(t *testing.T) {
 	// silence output
 	log.SetStdoutThreshold(log.LevelError)
 
 	originalReader := reader
+	originalWriter := writer
+
 	writer = io.Discard
 
-	var teardown func()
-	cfg, teardown = config.ForTest(t)
+	idx = util.IndexForTest(t)
+	cfg = *idx.Config()
 
-	idx = util.IndexForTest(t, cfg)
-	index.Store(idx, cfg, "_current")
+	idx.Store("_current")
 
 	args = []string{config.TestFile}
 
-	return func() {
-		teardown()
-
+	t.Cleanup(func() {
 		reader = originalReader
+		writer = originalWriter
 
 		args = nil
 
@@ -52,7 +52,7 @@ func setup(t *testing.T) func() {
 		fast = false
 		autosave = false
 		overwrite = false
-	}
+	})
 }
 
 func TestEmptyCmd(t *testing.T) {
