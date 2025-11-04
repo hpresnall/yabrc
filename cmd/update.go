@@ -23,12 +23,12 @@ func init() {
 	updateCmd.Flags().BoolVarP(&fast, "fast", "f", false, "only hash new or updated files")
 	updateCmd.Flags().BoolVarP(&autosave, "autosave", "a", false, "save the updated index without user confirmation")
 	updateCmd.Flags().BoolVarP(&overwrite, "overwrite", "o", false, "overwrite the existing index")
-	updateCmd.Flags().StringVar(&oldExt, "old_ext", "", "extension for storing the old Index; ignored with --overwrite")
+	updateCmd.Flags().StringVar(&oldExt, "old_ext", "", "extension for storing the old Index; ignored with --overwrite; defaults to timestamp")
 }
 
 var updateCmd = &cobra.Command{
 	Use:   "update <config_file>",
-	Short: "Rescan the filesystem and update the index",
+	Short: "Rescan the filesystem and update the index, creating one if necessary",
 	Args:  cobra.ExactArgs(1), // config file
 	RunE:  runUpdate,
 }
@@ -50,7 +50,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		existingIdx = nil
 
-		log.WARN.Printf("cannot open index '%s'; assuming new index creation\n", indexFile)
+		log.WARN.Printf("cannot open index '%s'; assuming new index creation: %v\n", indexFile, err)
 
 		if fast {
 			fast = false

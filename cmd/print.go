@@ -15,7 +15,7 @@ var json bool
 
 func init() {
 	printCmd.Flags().BoolVarP(&entries, "entries", "", false, "print all entries in the index")
-	printCmd.Flags().BoolVarP(&json, "json", "j", false, "JSON output; no logging")
+	printCmd.Flags().BoolVarP(&json, "json", "j", false, "JSON output of all entries in the index")
 }
 
 var printCmd = &cobra.Command{

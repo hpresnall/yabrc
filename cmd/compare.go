@@ -66,7 +66,9 @@ func runCompare(cmd *cobra.Command, args []string) error {
 	same := util.Compare(newIdx, oldIdx, ignoreMissing)
 
 	if !same {
-		return errors.New("") // empty error message => no error logged in main()
+		// empty error message => no error logged in main()
+		// but _will_ trigger an exit code of 1
+		return errors.New("")
 	}
 
 	log.INFO.Println("no differences!")
