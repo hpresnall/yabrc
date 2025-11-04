@@ -11,6 +11,7 @@ import (
 )
 
 // Compare examines the Entries in the given Indexes and returns true if they are all the same.
+// Supports custom output on missing entries or entries that have different hashes.
 func Compare(one *index.Index, two *index.Index, ignoreMissing bool) bool {
 	if one == two {
 		return true
@@ -31,6 +32,7 @@ func Compare(one *index.Index, two *index.Index, ignoreMissing bool) bool {
 		e2, exists2 := two.Get(path)
 
 		if !exists1 {
+			// missing from the 1st index implies a deletion; conditionally report
 			if !ignoreMissing {
 				OnMissing(e2, one)
 				same = false
@@ -38,6 +40,7 @@ func Compare(one *index.Index, two *index.Index, ignoreMissing bool) bool {
 			continue
 		}
 		if !exists2 {
+			// missing from the 2nd index implies an addition; always report
 			OnMissing(e1, two)
 			same = false
 			continue
@@ -73,7 +76,7 @@ func init() {
 
 	// default functions for Compare
 	OnMissing = func(missing index.Entry, other *index.Index) {
-		log.INFO.Printf("! '%s': '%s' %s\n", missing.Path(), other.Root(), outputTime(now, other.Timestamp()))
+		log.INFO.Printf("! '%s': '%s' %s\n", missing.Path(), other.Config().Root(), outputTime(now, other.Timestamp()))
 	}
 
 	OnHashChange = func(e1 index.Entry, e2 index.Entry) {

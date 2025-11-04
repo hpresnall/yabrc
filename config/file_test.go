@@ -1,11 +1,7 @@
-package index
+package config
 
 import (
 	"testing"
-
-	"github.com/spf13/afero"
-	log "github.com/spf13/jwalterweatherman"
-	"github.com/spf13/viper"
 )
 
 func TestConfig(t *testing.T) {
@@ -15,8 +11,7 @@ baseName: testBaseName
 savePath: testSavePath
 ignoredDirs: [' ignored.* ', '', ' test.*']
 `
-	c, teardown, err := newConfigFromString(t, config)
-	defer teardown()
+	c, err := FromString(t, config)
 
 	if err != nil {
 		t.Fatal("cannot load config", err)
@@ -53,25 +48,18 @@ ignoredDirs: [' ignored.* ', '', ' test.*']
 	if c.IgnoreDir("foo/ignore/bar") {
 		t.Error("should not have ignored directory 'foo/ignore/bar'")
 	}
-
-	// coverage for String()
-	s := c.String()
-
-	if s == "" {
-		t.Error("should return string")
-	}
 }
 
 func TestEmptyConfig(t *testing.T) {
-	_, err := NewConfig("")
+	_, err := FromString(t, "")
 
 	if err == nil {
 		t.Error("should not be able to load empty config", err)
 	}
 }
 
-func TestMissingConfig(t *testing.T) {
-	_, err := NewConfig("missing")
+func TestInvalidConfig(t *testing.T) {
+	_, err := FromString(t, "missing")
 
 	if err == nil {
 		t.Error("should not create a config from missing file")
@@ -79,8 +67,7 @@ func TestMissingConfig(t *testing.T) {
 }
 
 func TestConfigWithNoRoot(t *testing.T) {
-	_, teardown, err := newConfigFromString(t, "baseName: testBaseName")
-	defer teardown()
+	_, err := FromString(t, "baseName: testBaseName")
 
 	if err == nil {
 		t.Error("should not be able to load config with no root", err)
@@ -88,8 +75,7 @@ func TestConfigWithNoRoot(t *testing.T) {
 }
 
 func TestConfigWithNoBaseName(t *testing.T) {
-	_, teardown, err := newConfigFromString(t, "root: testRoot")
-	defer teardown()
+	_, err := FromString(t, "root: testRoot")
 
 	if err == nil {
 		t.Error("should not be able to load config with no baseName", err)
@@ -100,11 +86,10 @@ func TestConfigWithNoSavePath(t *testing.T) {
 	config := `root: testRoot
 baseName: testBaseName
 `
-	c, teardown, err := newConfigFromString(t, config)
-	defer teardown()
+	c, err := FromString(t, config)
 
 	if err != nil {
-		t.Fatal("cannot load config", err)
+		t.Fatal("cannot load config without savePath", err)
 	}
 
 	if c.SavePath() != "." {
@@ -113,6 +98,7 @@ baseName: testBaseName
 }
 
 func TestConfigWithNoIgnoredDirs(t *testing.T) {
+	// config should load with an empty array
 	testNoIgnoredDirs(t, `root: testRoot
 baseName: testBaseName
 `)
@@ -133,8 +119,7 @@ ignoredDirs:
 }
 
 func testNoIgnoredDirs(t *testing.T, config string) {
-	c, teardown, err := newConfigFromString(t, config)
-	defer teardown()
+	c, err := FromString(t, config)
 
 	if err != nil {
 		t.Fatal("cannot load config", err)
@@ -156,8 +141,7 @@ baseName: testBaseName
 savePath: testSavePath
 ignoredDirs: ' ignored.* '
 `
-	c, teardown, err := newConfigFromString(t, config)
-	defer teardown()
+	c, err := FromString(t, config)
 
 	if err != nil {
 		t.Fatal("cannot load config", err)
@@ -178,41 +162,26 @@ baseName: testBaseName
 savePath: testSavePath
 ignoredDirs: ' [] '
 `
-	_, teardown, err := newConfigFromString(t, config)
-	defer teardown()
+	_, err := FromString(t, config)
 
 	if err == nil {
 		t.Error("should not be able to load config with invalid ignoredDirs", err)
 	}
 }
 
-// calls setupTestFs()
-// links the index file system into Viper
-// creates 'config.yaml' from the given string and loads it
-func newConfigFromString(t *testing.T, configString string) (Config, func(), error) {
-	testFs, testFsTeardown := setupTestFs()
+func TestLoadMissingConfig(t *testing.T) {
+	_, err := Load("missing")
 
-	err := afero.WriteFile(testFs, "config.yaml", []byte(configString), 0644)
-
-	if err != nil {
-		// Fatal stops the goroutine before the caller can defer the teardown function
-		// run it manually now
-		testFsTeardown()
-		ConfigViperHook = func(v *viper.Viper) {}
-
-		t.Fatal("cannot make file", "config.yaml", err)
+	if err == nil {
+		t.Error("should not be able to load config from a missing file")
 	}
+}
 
-	ConfigViperHook = func(v *viper.Viper) {
-		v.SetFs(GetIndexFs())
+// for coverage
+func TestForTest(t *testing.T) {
+	config := ForTest(t)
+
+	if config.root != "testRoot" {
+		t.Fatal("should have created valid config")
 	}
-
-	log.DEBUG.Printf("loading config from '%s'\n", configString)
-
-	c, err := NewConfig("config.yaml")
-
-	return c, func() {
-		testFsTeardown()
-		ConfigViperHook = func(v *viper.Viper) {}
-	}, err
 }

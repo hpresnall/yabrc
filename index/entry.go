@@ -8,11 +8,17 @@ import (
 	"io"
 	"os"
 	gopath "path"
+	"path/filepath"
 	"time"
 
 	humanize "github.com/dustin/go-humanize"
 	"golang.org/x/text/unicode/norm"
+
+	"github.com/hpresnall/yabrc/file"
 )
+
+// package level hash => not safe for concurrency
+var sha256er = sha256.New()
 
 // Entry represents the data for a single file in the Index.
 type Entry struct {
@@ -35,22 +41,22 @@ func buildEntry(path string, info os.FileInfo) (Entry, error) {
 	}
 
 	base := gopath.Base(path)
+
 	if base != norm.NFC.String(info.Name()) {
 		return e, fmt.Errorf("path '%s' does not match FileInfo.Name() '%s'", path, info.Name())
 	}
 
-	// read all of the file into sha256; use the actual file name, not the normalized path
-	file, err := indexFs.Open(gopath.Join(gopath.Dir(path), info.Name()))
+	// read all of the entryFile into sha256; use the actual entryFile name, not the normalized path
+	entryFile, err := file.GetFs().Open(gopath.Join(gopath.Dir(path), info.Name()))
 
 	if err != nil {
 		return e, err
 	}
 
-	defer file.Close()
+	defer entryFile.Close()
+	sha256er.Reset()
 
-	sha256er := sha256.New()
-
-	if _, err = io.Copy(sha256er, file); err != nil {
+	if _, err = io.Copy(sha256er, entryFile); err != nil {
 		return e, err
 	}
 
@@ -59,7 +65,7 @@ func buildEntry(path string, info os.FileInfo) (Entry, error) {
 	sha := sha256er.Sum(nil)
 	base64 := base64.RawStdEncoding.EncodeToString(sha)
 
-	e.path = path // note using normalized path, not info.Name()
+	e.path = filepath.Clean(path) // note using normalized path, not info.Name()
 	e.lastMod = info.ModTime()
 	e.size = info.Size()
 	e.hash = base64

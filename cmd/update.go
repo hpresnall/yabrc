@@ -5,10 +5,13 @@ import (
 	"strings"
 
 	humanize "github.com/dustin/go-humanize"
-	"github.com/hpresnall/yabrc/index"
-	"github.com/hpresnall/yabrc/util"
 	"github.com/spf13/cobra"
 	log "github.com/spf13/jwalterweatherman"
+
+	"github.com/hpresnall/yabrc/config"
+	"github.com/hpresnall/yabrc/file"
+	"github.com/hpresnall/yabrc/index"
+	"github.com/hpresnall/yabrc/util"
 )
 
 var fast bool
@@ -20,34 +23,34 @@ func init() {
 	updateCmd.Flags().BoolVarP(&fast, "fast", "f", false, "only hash new or updated files")
 	updateCmd.Flags().BoolVarP(&autosave, "autosave", "a", false, "save the updated index without user confirmation")
 	updateCmd.Flags().BoolVarP(&overwrite, "overwrite", "o", false, "overwrite the existing index")
-	updateCmd.Flags().StringVar(&oldExt, "old_ext", "", "extension for storing the old Index; ignored with --overwrite")
+	updateCmd.Flags().StringVar(&oldExt, "old_ext", "", "extension for storing the old Index; ignored with --overwrite; defaults to timestamp")
 }
 
 var updateCmd = &cobra.Command{
 	Use:   "update <config_file>",
-	Short: "Rescan the filesystem and update the index",
+	Short: "Rescan the filesystem and update the index, creating one if necessary",
 	Args:  cobra.ExactArgs(1), // config file
 	RunE:  runUpdate,
 }
 
 func runUpdate(cmd *cobra.Command, args []string) error {
-	config, err := util.LoadConfig(args[0])
+	config, err := config.Load(args[0])
 
 	if err != nil {
 		return err
 	}
 
-	indexFile := util.GetIndexFile(config, ext)
+	indexFile := index.GetIndexFile(&config, ext)
 
 	log.INFO.Println()
 	log.INFO.Printf("loading existing Index '%s'\n", indexFile)
 
-	existingIdx, err := util.LoadIndex(config, ext)
+	existingIdx, err := index.Load(&config, ext)
 
 	if err != nil {
 		existingIdx = nil
 
-		log.WARN.Printf("cannot open index '%s'; assuming new index creation\n", indexFile)
+		log.WARN.Printf("cannot open index '%s'; assuming new index creation: %v\n", indexFile, err)
 
 		if fast {
 			fast = false
@@ -60,9 +63,9 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	var newIdx *index.Index
 
 	if fast {
-		newIdx, err = util.BuildIndex(config, existingIdx)
+		newIdx, err = util.BuildIndex(&config, existingIdx)
 	} else {
-		newIdx, err = util.BuildIndex(config, nil)
+		newIdx, err = util.BuildIndex(&config, nil)
 	}
 
 	if err != nil {
@@ -71,7 +74,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 
 	if existingIdx != nil {
 		log.INFO.Println()
-		log.INFO.Printf("comparing '%s' %s vs %s\n", newIdx.Root(), humanize.Time(newIdx.Timestamp()), humanize.Time(existingIdx.Timestamp()))
+		log.INFO.Printf("comparing '%s' %s vs %s\n", newIdx.Config().Root(), humanize.Time(newIdx.Timestamp()), humanize.Time(existingIdx.Timestamp()))
 		same := util.Compare(newIdx, existingIdx, false)
 
 		if same {
@@ -87,7 +90,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 		if oldExt == "" {
 			oldExt = "_" + existingIdx.Timestamp().Format("20060102_150405")
 		}
-		movedFile := util.GetIndexFile(config, oldExt)
+		movedFile := existingIdx.GetFile(oldExt)
 
 		if autosave {
 			log.INFO.Printf("moving '%s' to '%s'\n", indexFile, movedFile)
@@ -97,7 +100,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		err = index.GetIndexFs().Rename(indexFile, movedFile)
+		err = file.GetFs().Rename(indexFile, movedFile)
 
 		if err != nil {
 			return fmt.Errorf("cannot move existing Index to '%s': %v", movedFile, err)
@@ -125,7 +128,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	err = newIdx.Store(indexFile)
+	err = newIdx.Store(ext)
 
 	if err != nil {
 		return fmt.Errorf("cannot save Index to '%s': %v", indexFile, err)

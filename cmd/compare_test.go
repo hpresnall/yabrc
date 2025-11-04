@@ -3,11 +3,12 @@ package cmd
 import (
 	"testing"
 
-	"github.com/hpresnall/yabrc/util"
+	"github.com/hpresnall/yabrc/config"
+	"github.com/hpresnall/yabrc/test"
 )
 
 func TestCompareSelf(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
 	if err := runCompare(nil, args); err != nil {
 		t.Error("should not error on compare", err)
@@ -15,9 +16,9 @@ func TestCompareSelf(t *testing.T) {
 }
 
 func TestCompareSame(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
-	util.StoreIndex(idx, config, "_same")
+	idx.Store("_same")
 
 	ext2 = "_same"
 
@@ -27,16 +28,22 @@ func TestCompareSame(t *testing.T) {
 }
 
 func TestCompareDifferent(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
 	// update index with a new file
-	path := config.Root() + "/another"
-	f := util.MakeFile(t, path, "another", 0644)
+	// use zzz to ensure sorted paths in compare find missing files last
+	path := cfg.Root() + "/zzz"
+	f := test.MakeFile(t, path, "zzz", 0644)
+	idx.Add(path, f)
+
+	// update file so hash is different
+	path = cfg.Root() + "/test2/sub1/" + "test2_sub1_2"
+	f = test.MakeFile(t, path, "data2_1_x", 0644) // different hash
 	idx.Add(path, f)
 
 	ext2 = "_different"
 
-	util.StoreIndex(idx, config, ext2)
+	idx.Store(ext2)
 
 	err := runCompare(nil, args)
 
@@ -49,25 +56,25 @@ func TestCompareDifferent(t *testing.T) {
 }
 
 func TestCompareTwoConfigs(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
-	util.StoreIndex(idx, config, "_same")
+	idx.Store("_same")
 
 	ext2 = "_same"
 
-	if err := runCompare(nil, []string{util.ConfigFile, util.ConfigFile}); err != nil {
+	if err := runCompare(nil, []string{config.TestFile, config.TestFile}); err != nil {
 		t.Error("should not error on compare", err)
 	}
 }
 
 func TestCompareBadConfig(t *testing.T) {
-	defer setup(t)()
+	setup(t)
 
-	if err := runCompare(nil, []string{"invalid", util.ConfigFile}); err == nil {
+	if err := runCompare(nil, []string{"invalid", config.TestFile}); err == nil {
 		t.Error("should error on invalid config", err)
 	}
 
-	if err := runCompare(nil, []string{util.ConfigFile, "invalid"}); err == nil {
+	if err := runCompare(nil, []string{config.TestFile, "invalid"}); err == nil {
 		t.Error("should error on invalid config", err)
 	}
 }

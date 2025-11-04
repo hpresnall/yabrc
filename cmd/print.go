@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/hpresnall/yabrc/config"
 	"github.com/hpresnall/yabrc/index"
 	"github.com/spf13/cobra"
 	log "github.com/spf13/jwalterweatherman"
@@ -14,7 +15,7 @@ var json bool
 
 func init() {
 	printCmd.Flags().BoolVarP(&entries, "entries", "", false, "print all entries in the index")
-	printCmd.Flags().BoolVarP(&json, "json", "j", false, "JSON output; no logging")
+	printCmd.Flags().BoolVarP(&json, "json", "j", false, "JSON output of all entries in the index")
 }
 
 var printCmd = &cobra.Command{
@@ -39,8 +40,14 @@ func runPrint(_ *cobra.Command, args []string) error {
 		fmt.Println("[")
 	}
 
-	for n, index_name := range args {
-		idx, err := loadIndex(index_name, ext)
+	for n, configFile := range args {
+		config, err := config.Load(configFile)
+
+		if err != nil {
+			return err
+		}
+
+		idx, err := index.Load(&config, ext)
 
 		if err != nil {
 			return err

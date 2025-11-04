@@ -6,8 +6,6 @@ import (
 	golog "log"
 	"os"
 
-	"github.com/hpresnall/yabrc/index"
-	"github.com/hpresnall/yabrc/util"
 	"github.com/spf13/cobra"
 	log "github.com/spf13/jwalterweatherman"
 )
@@ -56,21 +54,4 @@ var rootCmd = &cobra.Command{
 // Execute runs the command line application.
 func Execute() error {
 	return rootCmd.Execute()
-}
-
-// helper function to load a Config and Index
-func loadIndex(configFile string, ext string) (*index.Index, error) {
-	config, err := util.LoadConfig(configFile)
-
-	if err != nil {
-		return nil, err
-	}
-
-	idx, err := util.LoadIndex(config, ext)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return idx, nil
 }

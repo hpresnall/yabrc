@@ -8,8 +8,7 @@ import (
 )
 
 func TestMainNoArgs(t *testing.T) {
-	cleanup := silence()
-	defer cleanup()
+	t.Cleanup(silence())
 
 	os.Args = []string{"version"}
 
@@ -17,11 +16,7 @@ func TestMainNoArgs(t *testing.T) {
 }
 
 func TestMainInvalidArgs(t *testing.T) {
-	cleanup := silence()
-	defer func() {
-		cleanup()
-		shouldExit = true
-	}()
+	t.Cleanup(silence())
 
 	os.Args = append(os.Args, "invalid")
 	shouldExit = false
