@@ -50,13 +50,19 @@ func (c Config) IgnoreDir(dir string) bool {
 
 // Formats the config as a String.
 func (c Config) String() string {
-	ignoredStrings := make([]string, len(c.ignoredDirs))
+	ignored := ""
 
-	for i, re := range c.ignoredDirs {
-		ignoredStrings[i] = re.String()
+	if c.ignoredDirs != nil {
+		ignoredStrings := make([]string, len(c.ignoredDirs))
+
+		for i, re := range c.ignoredDirs {
+			ignoredStrings[i] = re.String()
+		}
+
+		ignored = " " + strings.Join(ignoredStrings, ", ") + " "
 	}
 
-	return fmt.Sprintf("{root: '%s', baseName: '%s', savePath: '%s', ignoredDirs: [ %s ]}", c.root, c.baseName, c.savePath, strings.Join(ignoredStrings, ", "))
+	return fmt.Sprintf("{root: '%s', baseName: '%s', savePath: '%s', ignoredDirs: [%s]}", c.root, c.baseName, c.savePath, ignored)
 }
 
 func new(root string, savePath string, baseName string, possibleRegexes []string) (Config, error) {
