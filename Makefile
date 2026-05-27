@@ -15,7 +15,7 @@ setup: modules
 
 # update dependent packages as needed
 modules:
-	go mod tidy
+	@go mod tidy
 
 test:
 	@go test -timeout 30s -race -covermode=atomic -coverprofile=coverage.out ./...
@@ -26,7 +26,7 @@ coverage:
 
 # helper task for development
 dofmt:
-	go fmt ./...
+	@go fmt ./...
 
 lint:
 	@$(GOPATH)/bin/golangci-lint run
