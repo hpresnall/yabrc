@@ -28,8 +28,8 @@ func Load(configFile string) (Config, error) {
 
 	// default to the same directory as the config file
 	if savePath == "" {
-		// path.Dir assumes / for separator; Replace() first to ensure it works
-		savePath = path.Dir(strings.Replace(configFile, "\\", "/", -1))
+		// path.Dir assumes / for separator; ReplaceAll() first to ensure it works
+		savePath = path.Dir(strings.ReplaceAll(configFile, "\\", "/"))
 		log.DEBUG.Printf("set empty 'savePath' to '%s'", savePath)
 	}
 

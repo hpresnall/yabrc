@@ -74,7 +74,7 @@ func BuildIndex(config *config.Config, existingIdx *index.Index) (*index.Index, 
 		}
 
 		if existingIdx != nil {
-			path := strings.Replace(path, "\\", "/", -1)
+			path := strings.ReplaceAll(path, "\\", "/")
 			entry, exists := existingIdx.Get(path)
 
 			// Entry.LastMod() stored as Unix time

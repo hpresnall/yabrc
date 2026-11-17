@@ -12,6 +12,7 @@ import (
 	"time"
 
 	humanize "github.com/dustin/go-humanize"
+	log "github.com/spf13/jwalterweatherman"
 	"golang.org/x/text/unicode/norm"
 
 	"github.com/hpresnall/yabrc/file"
@@ -46,14 +47,23 @@ func buildEntry(path string, info os.FileInfo) (Entry, error) {
 		return e, fmt.Errorf("path '%s' does not match FileInfo.Name() '%s'", path, info.Name())
 	}
 
+	entryPath := gopath.Join(gopath.Dir(path), info.Name())
+
 	// read all of the entryFile into sha256; use the actual entryFile name, not the normalized path
-	entryFile, err := file.GetFs().Open(gopath.Join(gopath.Dir(path), info.Name()))
+	entryFile, err := file.GetFs().Open(entryPath)
 
 	if err != nil {
 		return e, err
 	}
 
-	defer entryFile.Close()
+	defer func() {
+		err := entryFile.Close()
+
+		if err != nil {
+			log.WARN.Printf("cannot close '%s'; %v\n", entryPath, err)
+		}
+	}()
+
 	sha256er.Reset()
 
 	if _, err = io.Copy(sha256er, entryFile); err != nil {

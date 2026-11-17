@@ -49,7 +49,13 @@ func load(idx *Index, path string) error {
 		return err
 	}
 
-	defer in.Close()
+	defer func() {
+		err := in.Close()
+
+		if err != nil {
+			log.WARN.Printf("cannot close '%s'; %v\n", path, err)
+		}
+	}()
 
 	gz, err := gzip.NewReader(in)
 
@@ -57,7 +63,13 @@ func load(idx *Index, path string) error {
 		return err
 	}
 
-	defer gz.Close()
+	defer func() {
+		err := gz.Close()
+
+		if err != nil {
+			log.WARN.Printf("cannot close gZIP reader; %v\n", err)
+		}
+	}()
 
 	// use Scanner rather than csv.Reader
 	// the latter does not skip blank lines or have any mechanism to tell you that fields are missing other than errors
@@ -176,7 +188,13 @@ func (idx *Index) Store(ext string) error {
 		return err
 	}
 
-	defer out.Close()
+	defer func() {
+		err := out.Close()
+
+		if err != nil {
+			log.WARN.Printf("cannot close '%s'; %v\n", indexFile, err)
+		}
+	}()
 
 	// gzip the file to save space and for minor obfuscation / edit protection
 	gz := gzip.NewWriter(out)
@@ -184,7 +202,7 @@ func (idx *Index) Store(ext string) error {
 	// not using csv.Writer since data needs to be converted to strings anyway, Sprintf is easier
 
 	// format is root,time on its own line, followed by CSV output for each Entry
-	_, err = gz.Write([]byte(fmt.Sprintf("%s,%d\n", idx.Config().Root(), idx.timestamp.Unix())))
+	_, err = fmt.Fprintf(gz, "%s,%d\n", idx.Config().Root(), idx.timestamp.Unix())
 
 	if err != nil {
 		return fmt.Errorf("cannot save index to '%s': %v", indexFile, err)

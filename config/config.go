@@ -73,7 +73,7 @@ func new(root string, savePath string, baseName string, possibleRegexes []string
 	}
 
 	// change Windows \ to /
-	root = strings.Replace(root, "\\", "/", -1)
+	root = strings.ReplaceAll(root, "\\", "/")
 
 	// note Clean assumes / separator
 	root = norm.NFC.String(path.Clean(root))
@@ -88,7 +88,7 @@ func new(root string, savePath string, baseName string, possibleRegexes []string
 	}
 
 	// change Windows \ to /
-	savePath = strings.Replace(savePath, "\\", "/", -1)
+	savePath = strings.ReplaceAll(savePath, "\\", "/")
 
 	var ignoredDirs []*regexp.Regexp
 

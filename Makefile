@@ -10,13 +10,16 @@ build:
 	@./scripts/build-all.sh
 
 # run once after git clone
+# may also need to run if there are errors like "export data version x is greater than maximum supported version y"
 setup: modules
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $$(go env GOPATH)/bin v2.15.0
+	go install golang.org/x/tools/gopls@latest
 
 # update dependent packages as needed
 modules:
-	@go mod tidy
+	go mod tidy
 
+.PHONY: test
 test:
 	@go test -timeout 30s -race -covermode=atomic -coverprofile=coverage.out ./...
 
@@ -32,4 +35,6 @@ lint:
 	@$(GOPATH)/bin/golangci-lint run
 
 clean:
-	rm -rf out coverage.out coverage.html
+	@go clean
+	@go clean -cache -testcache
+	@rm -rf out coverage.out coverage.html

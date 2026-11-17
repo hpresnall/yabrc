@@ -60,7 +60,11 @@ func runPrint(_ *cobra.Command, args []string) error {
 		}
 
 		if json {
-			fmt.Fprintln(writer, idx.StringWithEntries())
+			_, err := fmt.Fprintln(writer, idx.StringWithEntries())
+
+			if err != nil {
+				return err
+			}
 		}
 
 		if n < len(args)-1 {

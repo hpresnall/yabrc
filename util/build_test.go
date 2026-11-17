@@ -93,7 +93,7 @@ func TestBuildIndex(t *testing.T) {
 		t.Fatal("entry should exist in new Index")
 	}
 
-	if entry1.LastMod() == entry2.LastMod() {
+	if entry1.LastMod().Equal(entry2.LastMod()) {
 		t.Error("entries should have different lastMod times")
 	}
 

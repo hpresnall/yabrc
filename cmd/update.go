@@ -139,7 +139,13 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 
 func confirm(prompt string) bool {
 	for {
-		fmt.Fprintf(writer, "%s? (y/n) ", prompt)
+		_, err := fmt.Fprintf(writer, "%s? (y/n) ", prompt)
+
+		if err != nil {
+			log.ERROR.Println("cannot write prompt", err)
+			return false
+		}
+
 		input, err := reader.ReadString('\n')
 
 		if err != nil {

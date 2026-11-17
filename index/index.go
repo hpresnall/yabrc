@@ -67,7 +67,7 @@ func (idx *Index) Add(path string, info os.FileInfo) error {
 	}
 
 	// ensure Windows \ are changed to /
-	path = norm.NFC.String(strings.Replace(path, "\\", "/", -1))
+	path = norm.NFC.String(strings.ReplaceAll(path, "\\", "/"))
 
 	if !strings.HasPrefix(path, idx.config.Root()) {
 		return fmt.Errorf("%v: path '%s' does not start with root", idx, path)
